@@ -5,9 +5,10 @@ Python Package for denoising single cell with Random Matrix
 
 df - pandas dataframe 
 
-return df2 pandas datarame
+return denoised df2 pandas datarame for download
 
-```import randomly
+```
+import randomly
 model=randomly.rm()
 model.fit(df)
 df2=model.return_cleaned()
