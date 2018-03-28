@@ -3,11 +3,11 @@ import numpy as np
 import os
 import sys
 from scipy import stats, linalg
-from .preprocessing import preprocessing
 from sklearn.decomposition import PCA
+#from .preprocessing import preprocess
+from .visualization import *
 
-
-class rm():
+class rm(visualize):
     """Random Matrix Theory Analysis of Principal components
     Parameters
     ----------
@@ -98,19 +98,18 @@ class rm():
     """
 
 
-    def __init__(self, eigen_solver='wishart', tol=0.0, random_state=None, preprocessing='sc'):
-
-        self.eigen_solver = eigen_solver
-        self.preprocessing=preprocessing
+    def __init__(self, tol=0.0, random_state=None):
+        self.eigen_solver = 'wishart'
         self.tol = tol
         self.random_state = random_state
-        self.preprocessing
         self.n_cells=0
         self.n_genes=0
         self.cell_names=[]
         self.gene_names=[]
         self.L=[]
         self.V=None
+        self.df=None
+        self.X=None
         self.Lr=[]
         self.Vr=None
         self.explained_variance_=[]
@@ -123,9 +122,30 @@ class rm():
         self.sigma=0
         self.b_plus=0
         self.b_minus=0
+        self._preprocessing_flag=False
+    
+    def preprocess(self,df,min_tpm=10.0):
+        """The method executes preprocessing of the data by removing the genes 
+        and cells that have less than 10 transcripts by default. Transcripts are 
+        being converted to log2(1+TPM). Genes are  standard-normalized to have zero 
+        mean and standard deviation equal to 1. Input pandas DataFrame: Pandas dataframe, 
+        shape (n_cells, n_genes)
+        Returned preprocessed Dataframe
+        """
+        if self._preprocessing_flag:
+            print('Single Cell data has already been preprocessed with method preprocess')
+        else: 
+            signal_genes=df.columns[df.sum()>min_tpm].tolist()
+            signal_cells=df.index[df.T.sum()>min_tpm].tolist()
+            filtered_genes=df.columns[df.sum()<=min_tpm].tolist()
+            filtered_cells=df.index[df.T.sum()<=min_tpm].tolist()
+            df=df.loc[signal_cells, signal_genes]
+            df=self._to_tpm(df)
+            df=np.log2(1+df)
+            self.df=(df-df.mean())/(df.std(ddof=0)+0.0)
+            self._preprocessing_flag=True
 
-
-    def fit(self, df):
+    def fit(self, df=None, eigen_solver='wishart'):
         """Fit RM model
         Parameters
         ----------
@@ -136,20 +156,24 @@ class rm():
         self : object
             Returns the instance itself.
         """
-        self._fit(df)
+        if df==None and self._preprocessing_flag:
+            print("Preprocessed data is being used for fitting")
+            self._fit(self.df)
+        elif not self._preprocessing_flag and  df==None:
+            print('No data to fit')
+        elif not self._preprocessing_flag and df is not None:
+            print('Data has not been preprocessed')
+            self._fit(df)
         return self
-        
-    def _fit(self, df):
+
+    def _fit(self,df):
         """Fit the model for the dataframe df and apply the dimensionality reduction on
         using Marchenko - Pastur filtering
         """
         
-        if self.preprocessing=='sc':
-            df=preprocessing(df)
-        
-        n_cells, n_genes = df.shape
-        self.n_cells=n_cells
-        self.n_genes=n_genes
+        self.n_cells =df.shape[0]
+        self.n_genes=df.shape[1]
+
         self.gene_names=df.columns.tolist()
         self.cell_names=df.index.tolist()
         self.X=df.values
@@ -163,29 +187,57 @@ class rm():
             Xr=self._random_matrix(self.X)
             Yr=self._wishart_matrix(Xr)
             (self.Lr,self.Vr)=self._get_eigen(Yr)
-        
+         
             self.explained_variance_ = (self.L ** 2) / (self.n_cells)
             self.total_variance_ = self.explained_variance_.sum()
         
             self.L_mp=self._mp_calculation(self.L, self.Lr)
         
             self.lambda_c=self._tw()
-           
-            self.n_components=len(self.L[self.L>self.lambda_c])
         else: 
             print('Solver is undefined, please use Wishart Matrix as eigenvalue solver')
-        pca = PCA(n_components=self.n_components)
-        self.X_cleaned = pca.fit_transform(self.X)
+        
+        self.Ls=self.L[self.L>self.lambda_c]
+        self.Vs=self.V[:,self.L>self.lambda_c]
+        s=((self.L<self.lambda_c) & (self.L>self.b_minus))
+        self.Vn=self.V[:,s]
+        self.Ln=self.L[s]
+        self.n_components=len(self.Ls)
+           
+        Vna=self.Vr[:,len(self.Lr)/2-self.n_components/2:len(self.Lr)/2+self.n_components/2
+                    +(self.n_components)%2]
+        
+        structure_projected_genes=self._project_genes(self.X, self.Vs)
+        random_projected_genes=self._project_genes(self.X,Vna)
+        
+        noise_left_projected_genes=self._project_genes(self.X, self.Vn[:,:self.n_components])
+        noise_right_projected_genes=self._project_genes(self.X,self.Vn[:,-self.n_components:])
+
+        self.s=np.square(structure_projected_genes).sum(axis=1)
+        self.sa=np.square(random_projected_genes).sum(axis=1)
+        self.snl=np.square(noise_left_projected_genes).sum(axis=1)
+        self.snr=np.square(noise_right_projected_genes).sum(axis=1)
     
+
+
+        self.X_cleaned = pca.fit_transform(self.X)
+                
+
+
     def return_cleaned(self):
+        '''Method returns the dataframe with the denoised data'''
         df=pd.DataFrame(self.X_cleaned)
         return df
 
+    def _to_tpm(self,df):
+        df2=df.T/(df.sum(axis=1)+0.0)*10**(6)
+        return df2.T
+ 
     def _tw(self):
         gamma=self._mp_parameters(self.L_mp)['gamma']
         p=len(self.L)/gamma
         sigma=1.0/np.power(p,2.0/3.0)*np.power(gamma,5.0/6.0)*np.power((1+np.sqrt(gamma)),4.0/3.0)
-        lambda_c=np.mean(self.L_mp)*(1+np.sqrt(gamma))**2+3*sigma
+        lambda_c=np.mean(self.L_mp)*(1+np.sqrt(gamma))**2+sigma
         self.gamma=gamma
         self.p=p
         self.sigma=sigma
@@ -203,10 +255,6 @@ class rm():
         """Compute Eigenvalues of the real symmetric matrix"""
         (L,V) = linalg.eigh(Y)
         return (L,V)
-
-    def _project_(self, df, V):
-        return np.dot(df.values, V.T)
-
    
 
     def _mp_parameters(self, L):
@@ -247,7 +295,6 @@ class rm():
             loss_history.append(loss)
             iter += 1 
             if loss <= eps:
-                #print 'Converged, iterations:',iter
                 converged = True
             elif iter == max_iter:
                 print('Max interactions exceeded!')
@@ -263,9 +310,207 @@ class rm():
         self.b_plus=new_b_plus
         self.b_minus=new_b_minus
         return L[(L>new_b_minus) & (L<new_b_plus)]
-      
 
+    def _project_genes(self,X,V): 
+        #Return (n_genes, n_components) matrix of gene projections on components
+        return np.dot(X.T,V)
+    def _project_cells(self,X,V): 
+        #Return (n_cells, n_components) matrix of cell projections on components
+        return np.dot(X,np.dot(X.T,V))
+
+    def get_gene_norm(self,X):
+        return np.sqrt(np.square(X).sum(axis=0)/(X.shape[0]+0.0))
+
+    def plot_mp(self, comparison=True, path=False, info=True):
+        """Plot Eigenvalues,  Marchenko - Pastur distribution, 
+        randomized data and estimated Marchenko - Pastur for 
+        randomized data
+        """
+        x=np.linspace(0,int(round(np.max(self.L_mp)+0.5)),1000)
+        y=self._mp_pdf(x,self.L_mp)
+        yr=self._mp_pdf(x,self.Lr)
+        
+        if info:
+            fig = plt.figure(dpi=100)
+            ax = fig.add_subplot(111)
+        else:
+            plt.figure(dpi=100)
+        plot=sns.distplot(self.L, bins=700, norm_hist=True,
+                          kde=False, hist_kws={"alpha": 0.85,
+                          "color":sns.xkcd_rgb["cornflower blue"]})   
+        
+        plot.set(xlabel='First cell eigenvalues normalized distribution')
+        plt.plot(x,y,sns.xkcd_rgb["pale red"],lw=2)
+        
+        if comparison:  
+            sns.distplot(self.Lr, bins=30,norm_hist=True, 
+                         kde=False,hist_kws={"histtype": "step","linewidth": 3,
+                         "alpha": 0.75,"color":sns.xkcd_rgb["apple green"]})
+            plt.plot(x,yr, sns.xkcd_rgb["sap green"],lw=1.5,ls='--')
+            plt.legend(['MP for random part in data','MP for randomized data',
+                        'Randomized data','Real data']
+                       ,loc="upper right",frameon=True)    
+        else: 
+            plt.legend(['MP for random part in data','Real data']
+                        ,loc="upper right",frameon=True)        
+        
+        plt.xlim([0,int(round(np.max(self.L_mp)+0.5))])
+        plt.grid()
+        
+        if info:
+            dic=self._mp_parameters(self.L_mp)
+            info1 = r'$\bf{Data\ Parameters}$'+'\n%i cells\n%i genes'\
+                                    %(self.n_cells, self.n_genes)
+            info2 = '\n'+r'$\bf{MP\ distribution\ in\ data}$'\
+                    +'\n$\gamma=%.2f$\n$\sigma^2=%.2f$\n$b_-=%.2f$\n$b_+=%.2f$'\
+                                    %(dic['gamma'],dic['s'],dic['b_minus'], dic['b_plus'])
+            info3='\n'+r'$\bf{Analysis}$'+'\n%i eigenvalues > $\lambda_c (3 \sigma)$\n%i noise eigenvalues'\
+                                    %(self.n_components, self.n_cells - self.n_components)
+            infoT= info1+info2+info3
+            props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
+            
+            at=AnchoredText(infoT,loc=2, prop=dict(size=10), 
+                           frameon=True, bbox_to_anchor=(1., 1.024),\
+                           bbox_transform=ax.transAxes)
+            at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
+            lgd=ax.add_artist(at)
+            if path:    
+                plt.savefig(path, bbox_extra_artists=(lgd,), bbox_inches='tight')
+        else:
+            if path:    
+                plt.savefig(path)
+        return plt.show()
     
+    def plot_statistics(self, path=False,fit=True, fdr_cut=0.001):
+         """Plot gene variance projecte
 
+        """
+        gs = gridspec.GridSpec(2, 2)
+        fig = plt.figure(dpi=100, figsize=[9, 4.4])
+        ax = plt.subplot(gs[0, 0])
+        ax0 = plt.subplot2grid((1, 3), (0, 0), colspan=2)
+        
+        sns.distplot(self.sa, norm_hist=True, kde=False, bins=100, hist_kws={"alpha": 0.8,\
+                                                "color":sns.xkcd_rgb["golden yellow"],"zorder":1},)
+        sns.distplot(self.s, norm_hist=True, kde=False, bins=200, hist_kws={"alpha": 0.6,\
+                                                 "color":sns.xkcd_rgb["cerulean"],"zorder":3})
+        sns.distplot(self.snl, norm_hist=True, kde=False, bins=100, hist_kws={"alpha": 0.55,\
+                                                "color":sns.xkcd_rgb["leaf green"],"zorder":5})
+        sns.distplot(self.snr, norm_hist=True, kde=False, bins=100, hist_kws={"alpha": 0.5,\
+                                                "color":sns.xkcd_rgb["cerise"],"zorder":7})
+        plt.xlim([0,np.max(self.snr)+200])
+        plt.xlabel('Normalized sample variance')
+        plt.ylabel('Sample variance probability distribution')
 
+        hist_sa=mpatches.Patch(color=sns.xkcd_rgb["golden yellow"], 
+                               label='{0} random vectors'.format(self.n_components)\
+                               ,alpha=0.8)
+        hist_s=mpatches.Patch(color=sns.xkcd_rgb["cerulean"]
+                              ,label='All {0} signal eigenvectors'.format(self.n_components)\
+                              ,alpha=0.6)
+        hist_snl=mpatches.Patch(color=sns.xkcd_rgb["leaf green"] 
+                                ,label='Lowest {0} MP eigenvectors'.format(self.n_components)\
+                               ,alpha=0.55)
+        hist_snr=mpatches.Patch(color=sns.xkcd_rgb["cerise"] 
+                                ,label='Largest {0} MP eigenvectors'.format(self.n_components)\
+                               ,alpha=0.5)
+        xgr=np.linspace(0,np.max(self.snr),1000)
+        
+        if fit:        
+            xgl=np.linspace(0,np.max(self.snl),1000)
+            xk=np.linspace(0,np.max(self.sa),1000)
+            xs=np.linspace(0,np.max(self.s)+0.0,1000)
 
+            fits=self._fit_gamma(self.s)
+            fitl=self._fit_gamma(self.snl)
+            fitr=self._fit_gamma(self.snr)
+            ygl=self._gamma_pdf(xgl,fitl)
+            ygr=self._gamma_pdf(xgr,fitr)
+            ys=self._gamma_pdf(xs,fits)
+            y=stats.chi2.pdf(xk, self.n_components)
+            
+            plt.plot(xk,y,zorder=2,color=sns.xkcd_rgb["adobe"],linestyle='--',linewidth=1.1)
+            plt.plot(xgl,ygl,zorder=6,color=sns.xkcd_rgb["grassy green"],linestyle='-',linewidth=1.5)
+            plt.plot(xgr,ygr,zorder=8,color=sns.xkcd_rgb["rose red"],linestyle='-',linewidth=1.5)
+            plt.plot(xs,ys,zorder=4,color=sns.xkcd_rgb["blue blue"],linestyle='-',linewidth=1.5)
+          
+            line_gammal = mlines.Line2D([], [], color=sns.xkcd_rgb["grassy green"]\
+                                        ,label=r'Gamma PDF: $\alpha =%.1f$\
+                                        ,$\beta = %.1f$'%(fitl[0],1/fitl[2])\
+                                        ,linewidth=1.5)
+            line_gammar = mlines.Line2D([], [], color=sns.xkcd_rgb["rose red"] \
+                                        ,label=r'Gamma PDF: $\alpha =%.1f$\
+                                        ,$\beta = %.1f$'%(fitr[0],1/fitr[2])\
+                                        ,linewidth=1.5)
+            line_chi = mlines.Line2D([], [], color=sns.xkcd_rgb["adobe"]\
+                                    ,label='Chi-Squared Distribution'\
+                                     ,linewidth=1.1,linestyle='--')
+            line_gammas = mlines.Line2D([], [], color=sns.xkcd_rgb["blue blue"]\
+                                        ,label=r'Gamma PDF: $\alpha =%.1f$\
+                                        ,$\beta = %.2f$'%(fits[0],1/fits[2])\
+                                        ,linewidth=1.5)
+            plt.legend(handles=[hist_s,line_gammas,hist_snr,line_gammar,hist_snl\
+                               ,line_gammal,hist_sa,line_chi],\
+                                , title=r'$\bf{Gene\ projection\ samples}$'
+                                , loc="upper right",frameon=True)
+        else:
+            plt.legend(handles=[hist_s,hist_snr,hist_snl,hist_sa],\
+                               title=r'$\bf{Gene\ projection\ samples}$'\
+                               , loc="upper right",frameon=True)
+            
+        ax1 = plt.subplot2grid((1, 3), (0, 2))
+        
+                       
+        y_fdr=np.vectorize(self._fdr)(xgr)
+           
+        host =ax1
+        par = ax1.twinx()
+
+        host.set_ylabel("False Discovery Rate")
+        par.set_ylabel("Number of genes")
+        
+        p1, = host.plot(xgr, y_fdr[0], label="False Discovery Rate",ls='--'\
+                        ,lw=2,color=sns.xkcd_rgb["pumpkin orange"])
+        p2, = par.plot(xgr, y_fdr[1], label="Number of genes",ls='-.'\
+                      ,lw=1.5,color=sns.xkcd_rgb["violet blue"])
+
+        host.yaxis.get_label().set_color(p1.get_color())
+        par.yaxis.get_label().set_color(p2.get_color())
+
+        line_fdr = mlines.Line2D([], [], color=sns.xkcd_rgb["pumpkin orange"],\
+                 label='Ratio signal vs \nlargest {0} MP\ndistributions'.format(self.n_components)
+                 ,linewidth=2,linestyle='--')
+        line_genes = mlines.Line2D([], [], color=sns.xkcd_rgb["violet blue"],\
+                 label='Relevant genes',linewidth=1.5,linestyle='-.')
+        ax1.legend(handles=[line_fdr,line_genes],loc="upper right",frameon=True)
+        
+        host.set_yscale("log")
+        host.grid('on')
+        host.set_xlabel('Normalized sample variance')
+        host.set_xlim(-2,max(xgr))
+
+        plt.tight_layout()
+        
+         
+        if path:
+            plt.savefig(path)
+            
+        return plt.show()
+
+      
+    def _fdr(self, x):
+            area_noise=self.snr[self.snr>x].shape[0]
+            area_signal=self.s[self.s>x].shape[0]
+            fdr=area_noise/float(area_signal)        
+            genes=self.s[self.s>x].tolist()                        
+            return (fdr,len(genes)) 
+
+    def _fit_gamma(self, x):
+        alpha, loc, beta=stats.gamma.fit(x,loc=0, scale=1)
+        return (alpha, loc, beta)
+
+    def _gamma_pdf(self, x,(alpha,loc,beta)):
+        y=stats.gamma(a=alpha, loc=loc, scale=beta).pdf(x)
+        return y
+
+  
