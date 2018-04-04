@@ -27,15 +27,15 @@ sns.set_context("paper")
 sns.set_palette("deep")
 
 class visualize():
-    
     def __init__(self):
         pass
     
-    def plot(self, X, labels=False, type='tsne', distance='',path=False, perplexity=30, n_comp=False, s=3, c='k'): 
+    def plot(self, X=None, labels=False, type='tsne', distance='',path=False, perplexity=30, n_comp=False, s=2, c='k'): 
         #Visualizes data using 2d MDS, PCA, TSNE
         if not isinstance(labels, bool):
             labels=list(labels)
-
+        if X is None:
+            X=self.X_cleaned
         X_std=X#.StandardScaler().fit_transform(X)#First we normalize the data by Zscore
         if type=='mds':
             if distance=='precomputed':
