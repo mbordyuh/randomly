@@ -19,7 +19,7 @@ import randomly
 
 # load example
 import pandas as pd
-df = pd.read_table('Data/data.tsv')
+df = pd.read_table('Data/data.tsv', index_col=0)
 
 # run code
 model=randomly.rm()
