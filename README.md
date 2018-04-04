@@ -3,7 +3,8 @@ Python Package for denoising single cell with Random Matrix
 
 **Example of usage**
 
-df - pandas dataframe 
+df - pandas dataframe : Pandas dataframe, shape (n_cells, n_genes)
+index correspond the cell name and columns correspond the unique gene names
 
 return denoised df2 pandas datarame for download
 
