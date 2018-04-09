@@ -4,7 +4,6 @@ import os
 import sys
 from scipy import stats, linalg
 from sklearn.decomposition import PCA
-#from .preprocessing import preprocess
 from .visualization import *
 from matplotlib import rcParams
 rcParams['patch.force_edgecolor'] = True
@@ -110,10 +109,8 @@ class rm(visualize):
         self.gene_names=[]
         self.L=[]
         self.V=None
-        self.df=None
         self.X=None
         self.Lr=[]
-        self.Vr=None
         self.explained_variance_=[]
         self.total_variance_=[]
         self.L_mp=[]
@@ -122,6 +119,7 @@ class rm(visualize):
         self.gamma=0
         self.p=0
         self.sigma=0
+        self.x_peak=0
         self.b_plus=0
         self.b_minus=0
         self._preprocessing_flag=False
@@ -166,14 +164,21 @@ class rm(visualize):
             
             self.signal_cells=df.index[(df.sum(axis=1)>min_tpm) 
                                         & (df.apply(lambda x: 
-                                           np.count_nonzero(x),axis=1)>=100)].tolist()
+                                           np.count_nonzero(x), axis=1)>=100)].tolist()
             #self.filtered_genes=df.columns[df.sum()<=min_tpm].tolist()
             #self.filtered_cells=df.index[df.T.sum()<=min_tpm].tolist()
             df=df.loc[self.signal_cells, self.signal_genes]
             df=self._to_tpm(df)
             df=np.log2(1+df)
-            self.df=df
+            self.X=df.values
+            self.n_cells =df.shape[0]
+            self.n_genes= df.shape[1]
+            self.gene_names=df.columns.tolist()
+            self.cell_names=df.index.tolist()
+        
             self._preprocessing_flag=True
+            
+
         return self
 
     def fit(self, df=None, eigen_solver='wishart'):
@@ -190,27 +195,23 @@ class rm(visualize):
         """
         if self._preprocessing_flag:
             print("Preprocessed data is being used for fitting")
-            self._fit(self.df)
         else:
             print('Data has not been preprocessed')
-            self._fit(df)
+            self.X=df.values
+            self.n_cells=df.shape[0]
+            self.n_genes=df.shape[1]
+            self.gene_names=df.columns.tolist()
+            self.cell_names=df.index.tolist()
+        self._fit(self.X)
         return self
 
     def _fit(self, df):
         """Fit the model for the dataframe df and apply the dimensionality reduction on
         using Marchenko - Pastur filtering
         """
-        self.mean_=self.df.mean().values
-        self.std_=self.df.std(ddof=0).values
-
-        self.df=(df-df.mean())/(df.std(ddof=0)+0.0)
-        
-        self.n_cells =self.df.shape[0]
-        self.n_genes=self.df.shape[1]
-
-        self.gene_names=df.columns.tolist()
-        self.cell_names=df.index.tolist()
-        self.X=self.df.values
+        self.mean_=np.mean(self.X, axis=0)
+        self.std_=np.std(self.X, axis=0, ddof=0)
+        self.X=(self.X-self.mean_)/(self.std_+0.0)
         
         """Dispatch to the right submethod depending on the chosen solver"""
         if self.eigen_solver=='wishart':
@@ -218,41 +219,38 @@ class rm(visualize):
             (self.L, self.V)=self._get_eigen(Y)
             Xr=self._random_matrix(self.X)
             Yr=self._wishart_matrix(Xr)
-            (self.Lr,self.Vr)=self._get_eigen(Yr)
-         
+            (self.Lr, Vr)=self._get_eigen(Yr)
+        
             self.explained_variance_ = (self.L ** 2) / (self.n_cells)
             self.total_variance_ = self.explained_variance_.sum()
         
-            self.L_mp=self._mp_calculation(self.L, self.Lr)
-        
+            self.L_mp=self._mp_calculation(self.L, self.Lr)   
             self.lambda_c=self._tw()
+            self.peak=self._mp_parameters(self.L_mp)['peak']
         else: 
             print('Solver is undefined, please use Wishart Matrix as eigenvalue solver')
         
         self.Ls=self.L[self.L>self.lambda_c]
-        self.Vs=self.V[:,self.L>self.lambda_c]
+        Vs=self.V[:,self.L>self.lambda_c]
         s=((self.L<self.lambda_c) & (self.L>self.b_minus))
-        self.Vn=self.V[:, s]
+        Vn=self.V[:, s]
         self.Ln=self.L[s]
         self.n_components=len(self.Ls)
-        self.components_=np.dot(self.Vs, np.diag(self.Ls))  
-
-        Vna=self.Vr[:, len(self.Lr)/2-self.n_components/2:len(self.Lr)/2
+        
+        Vna=Vr[:, len(self.Lr)/2-self.n_components/2:len(self.Lr)/2
                     + self.n_components/2
                     + (self.n_components)%2]
         
-        structure_projected_genes=self._project_genes(self.X, self.Vs)
+        structure_projected_genes=self._project_genes(self.X, Vs)
         random_projected_genes=self._project_genes(self.X, Vna)
         
-        noise_left_projected_genes=self._project_genes(self.X, self.Vn[:,:self.n_components])
-        noise_right_projected_genes=self._project_genes(self.X, self.Vn[:,-self.n_components:])
+        noise_left_projected_genes=self._project_genes(self.X,  Vn[:,:self.n_components])
+        noise_right_projected_genes=self._project_genes(self.X, Vn[:,-self.n_components:])
 
         self._s=np.square(structure_projected_genes).sum(axis=1)
         self._sa=np.square(random_projected_genes).sum(axis=1)
         self._snl=np.square(noise_left_projected_genes).sum(axis=1)
         self._snr=np.square(noise_right_projected_genes).sum(axis=1)
-        
-        self.X_cleaned=np.dot(np.dot(self.Vs, self.Vs.T), self.X)  
         
     def return_cleaned(self, fdr=0.001):
         ''' Method returns the dataframe with denoised single cell data
@@ -270,7 +268,9 @@ class rm(visualize):
         object : Pandas DataFrame shape(n_cells, n_genes)
                 Cleaned matrix
         '''
-        df=pd.DataFrame(self.X_cleaned)
+        Vs=self.V[:,self.L>self.lambda_c]
+        X_cleaned=np.dot(np.dot(Vs, Vs.T), self.X)  
+        df=pd.DataFrame(X_cleaned)
         df.index=self.cell_names
         df.columns=self.gene_names
         genes=self.select_genes(fdr)
@@ -378,7 +378,7 @@ class rm(visualize):
     def get_gene_norm(self, X):
         return np.sqrt(np.square(X).sum(axis=0)/(X.shape[0]+0.0))
 
-    def plot_mp(self, comparison=True, path=False, info=True, bins=1000):
+    def plot_mp(self, comparison=True, path=False, info=True, bins=None):
         """Plot Eigenvalues,  Marchenko - Pastur distribution, 
         randomized data and estimated Marchenko - Pastur for 
         randomized data
@@ -397,7 +397,8 @@ class rm(visualize):
         object : plot
             
         """
-
+        if bins is None:
+            bins=self.n_cells
         x=np.linspace(0, int(round(np.max(self.L_mp)+0.5)), 2000)
         y=self._mp_pdf(x, self.L_mp)
         yr=self._mp_pdf(x, self.Lr)
