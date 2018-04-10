@@ -12,7 +12,11 @@ pip install -r requirements.txt
 df - pandas dataframe : Pandas dataframe, shape (n_cells, n_genes)
 index correspond the cell name and columns correspond the unique gene names
 
-return denoised df2 pandas datarame for download
+return denoised df2 pandas datarame for download and 
+3 plots:
+a) Marchnko-Pastur distribuiton plot (mp.pdf) 
+b) Gene statistics (statistics.pdf)
+c) tsne plot of denoised data (tsne.pdf)
 
 ```
 import randomly
