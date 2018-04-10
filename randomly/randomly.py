@@ -157,7 +157,7 @@ class rm(visualize):
             print('Single Cell data has already been preprocessed with method preprocess')
         else: 
             #Duplicated gene and cell names are removed
-            df=df.loc[~df.index.duplicated(),~df.columns.duplicated()]
+            df=df.loc[~df.index.duplicated(), ~df.columns.duplicated()]
             self.signal_genes=df.columns[(df.sum()>min_tpm)
                                          & (df.apply(lambda x: 
                                            np.count_nonzero(x))>=30)].tolist()
@@ -206,8 +206,8 @@ class rm(visualize):
         return self
 
     def _fit(self, df):
-        """Fit the model for the dataframe df and apply the dimensionality reduction on
-        using Marchenko - Pastur filtering
+        """Fit the model for the dataframe df and apply the dimensionality reduction
+        by removing the eigenvalues that follow Marchenko - Pastur distribution
         """
         self.mean_=np.mean(self.X, axis=0)
         self.std_=np.std(self.X, axis=0, ddof=0)
@@ -231,7 +231,7 @@ class rm(visualize):
             print('Solver is undefined, please use Wishart Matrix as eigenvalue solver')
         
         self.Ls=self.L[self.L>self.lambda_c]
-        Vs=self.V[:,self.L>self.lambda_c]
+        Vs=self.V[:, self.L>self.lambda_c]
         s=((self.L<self.lambda_c) & (self.L>self.b_minus))
         Vn=self.V[:, s]
         self.Ln=self.L[s]
@@ -239,7 +239,7 @@ class rm(visualize):
         
         Vna=Vr[:, len(self.Lr)/2-self.n_components/2:len(self.Lr)/2
                     + self.n_components/2
-                    + (self.n_components)%2]
+                    +(self.n_components)%2]
         
         structure_projected_genes=self._project_genes(self.X, Vs)
         random_projected_genes=self._project_genes(self.X, Vna)
@@ -252,6 +252,9 @@ class rm(visualize):
         self._snl=np.square(noise_left_projected_genes).sum(axis=1)
         self._snr=np.square(noise_right_projected_genes).sum(axis=1)
         
+        Vs=self.V[:, self.L>self.lambda_c]  
+        self.X=np.dot(np.dot(Vs, Vs.T), self.X)
+    
     def return_cleaned(self, fdr=0.001):
         ''' Method returns the dataframe with denoised single cell data
         if fdr == True, return method returns structure genes up to the fdr level
@@ -268,9 +271,7 @@ class rm(visualize):
         object : Pandas DataFrame shape(n_cells, n_genes)
                 Cleaned matrix
         '''
-        Vs=self.V[:,self.L>self.lambda_c]
-        X_cleaned=np.dot(np.dot(Vs, Vs.T), self.X)  
-        df=pd.DataFrame(X_cleaned)
+        df=pd.DataFrame(self.X)
         df.index=self.cell_names
         df.columns=self.gene_names
         genes=self.select_genes(fdr)
@@ -279,11 +280,11 @@ class rm(visualize):
             return df
         elif fdr<1.0:
             genes=self.select_genes(fdr)
-            return df.loc[:,genes]
+            return df.loc[:, genes]
         else:
             print('Genes False discovery rate is undefined, please select FDR<1')
 
-    def _to_tpm(self,df):
+    def _to_tpm(self, df):
         '''Transform transcripts to transcripts per million'''
         df2=df.T/(df.sum(axis=1)+0.0)*10**(6)
         return df2.T
@@ -302,7 +303,7 @@ class rm(visualize):
 
     def _wishart_matrix(self, X):
         """Compute Wishart Matrix of the cells"""
-        return np.dot(X,X.T)/(X.shape[1]+0.0)
+        return np.dot(X, X.T)/(X.shape[1]+0.0)
     
     def _random_matrix(self, X):
         return np.apply_along_axis(np.random.permutation, 0, X)
@@ -435,7 +436,8 @@ class rm(visualize):
                         , loc="upper right"
                         , frameon=True)        
         
-        plt.xlim([0, int(round(np.max(self.L_mp)+0.5))])
+        plt.xlim([0, int(round(max(np.max(self.Lr), np.max(self.L_mp))
+                                +0.5))])
         plt.grid()
         
         if info:
@@ -515,7 +517,7 @@ class rm(visualize):
                                 , label='All {0} signal eigenvectors'.format(self.n_components)
                                 , alpha=0.6)
         hist_snl=mpatches.Patch(color=sns.xkcd_rgb["leaf green"] 
-                                ,label='Lowest {0} MP eigenvectors'.format(self.n_components)
+                                , label='Lowest {0} MP eigenvectors'.format(self.n_components)
                                 , alpha=0.55)
         hist_snr=mpatches.Patch(color=sns.xkcd_rgb["cerise"] 
                                 , label='Largest {0} MP eigenvectors'.format(self.n_components)
@@ -537,7 +539,7 @@ class rm(visualize):
             ys=self._gamma_pdf(xs, fits)
             y=stats.chi2.pdf(xk, self.n_components)
             
-            plt.plot(xk,y, zorder=2
+            plt.plot(xk, y, zorder=2
                     , color=sns.xkcd_rgb["adobe"]
                     , linestyle='--'
                     , linewidth=1.1)
@@ -565,7 +567,7 @@ class rm(visualize):
             line_chi = mlines.Line2D([], []
                                     , color=sns.xkcd_rgb["adobe"]
                                     , label='Chi-Squared Distribution'
-                                    , linewidth=1.1,linestyle='--')
+                                    , linewidth=1.1, linestyle='--')
             line_gammas = mlines.Line2D([], []
                                         , color=sns.xkcd_rgb["blue blue"]
                                         , label=r'Gamma PDF: $\alpha =%.1f$, $\beta = %.2f$'%(fits[0],1/fits[2])

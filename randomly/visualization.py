@@ -30,18 +30,27 @@ class visualize():
     def __init__(self):
         pass
     
-    def plot(self, X=None, labels=False, type='tsne', distance='',path=False, perplexity=30, n_comp=False, s=2, c='k'): 
+    def plot(self, X=None, labels=False, type='tsne', distance=''
+            , path=False
+            , perplexity=30
+            , n_comp=False
+            , s=2
+            , c='k'): 
+        
         #Visualizes data using 2d MDS, PCA, TSNE
         if not isinstance(labels, bool):
             labels=list(labels)
         if X is None:
-            X=self.X_cleaned
-        X_std=X#.StandardScaler().fit_transform(X)#First we normalize the data by Zscore
+            if self.X is None:
+                raise ValueError('Nothing to plot, please fit the data first')
+            else:
+                X=self.X
+       
         if type=='mds':
             if distance=='precomputed':
                 similarities=X
             else:
-                similarities = 1-np.corrcoef(X_std)
+                similarities = 1-np.corrcoef(X)
        
             mds = manifold.MDS(n_components=2, max_iter=1000, eps=1e-8,
                            dissimilarity="precomputed", n_jobs=1)
@@ -54,7 +63,9 @@ class visualize():
                 for j in np.unique(labels):
                     plt.scatter(pos[labels==j, 0], pos[labels==j, 1], s=s, c=c)
             else:    
-                plt.scatter(pos[:, 0], pos[:, 1], s=s, c=c)
+                plt.scatter(pos[:, 0], pos[:, 1]
+                    , s=s
+                    , c=c)
             plt.setp(ax.spines.values(), linewidth=0)
             ax.set_xticks([])
             ax.set_yticks([])
@@ -62,7 +73,7 @@ class visualize():
             plt.ylabel('MDS2')
         elif type=='pca':
             sklearn_pca = PCA(n_components=2)
-            pos = sklearn_pca.fit_transform(X_std)
+            pos = sklearn_pca.fit_transform(X)
             
             fig = plt.figure(dpi=100, figsize=(5,5))
             ax = plt.gca()
@@ -70,7 +81,9 @@ class visualize():
                 for j in np.unique(labels):
                     plt.scatter(pos[labels==j, 0], pos[labels==j, 1], s=s)
             else:    
-                plt.scatter(pos[:, 0], pos[:, 1], s=s, c=c)
+                plt.scatter(pos[:, 0], pos[:, 1]
+                            , s=s
+                            , c=c)
             plt.setp(ax.spines.values(), linewidth=0)
             ax.set_xticks([])
             ax.set_yticks([])
@@ -80,26 +93,30 @@ class visualize():
         elif type=='tsne':
             if n_comp:
                 pca = PCA(n_components=n_comp)
-                X_std = pca.fit_transform(X_std)
+                X = pca.fit_transform(X)
             tsne = manifold.TSNE(n_components=2, init='pca', 
-                                 random_state=0,metric='correlation', 
+                                 random_state=0, metric='correlation', 
                                  perplexity=perplexity)
-            pos = tsne.fit_transform(X_std)
+            pos = tsne.fit_transform(X)
             
             fig = plt.figure(dpi=100, figsize=(5,5))
             ax = plt.gca()
             if labels:
                 for j in np.unique(labels):
-                    plt.scatter(pos[labels==j, 0], pos[labels==j, 1], s=s)
+                    plt.scatter(pos[labels==j, 0]
+                                , pos[labels==j, 1]
+                                , s=s
+                                , c=c)
             else:    
-                plt.scatter(pos[:, 0], pos[:, 1], s=s, c=c)
+                plt.scatter(pos[:, 0], pos[:, 1]
+                            , s=s
+                            , c=c)
             
             plt.setp(ax.spines.values(), linewidth=0)
             ax.set_xticks([])
             ax.set_yticks([])
             plt.xlabel('t-SNE1')
             plt.ylabel('t-SNE2')
-            #plt.axis('off')
         if path:
             plt.savefig(path)
         return plt.show()
