@@ -30,8 +30,8 @@ model.fit()
 Plotting
 
 ```
-model.plot_mp(path='../Figures/mp_{0}.pdf'.format(name))
-model.plot_statistics(path='../Figures/statistics_{0}.pdf'.format(name))
-model.plot(model.X_cleaned, type='tsne', path='../Figures/tsne.cleaned_{0}.pdf'.format(name),s=2)
-df2=model.return_cleaned()
+model.plot_mp(path='../Figures/mp.pdf')
+model.plot_statistics(path='../Figures/statistics.pdf')
+model.plot(type='tsne', path='../Figures/tsne.pdf', s=2)
+df2=model.return_cleaned(fdr=0.001)
 ```
