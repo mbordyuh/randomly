@@ -124,7 +124,7 @@ class rm(visualize):
         self.b_minus=0
         self._preprocessing_flag=False
     
-    def preprocess(self, df, min_tpm=100.0):
+    def preprocess(self, df, min_tp=100.0):
         """ The method executes preprocessing of the data by removing 
         1. Genes and cells that have less than 10 transcripts by default. 
         2. Cells are removed that express less than 10 genes
@@ -142,7 +142,7 @@ class rm(visualize):
             where n_cells in the number of cells
             and n_genes is the number of genes.
         
-        min_tpm: float
+        min_tp: float
             minimum number of transcripts to be observed
             in every cell and every gene
         Returns
@@ -158,15 +158,15 @@ class rm(visualize):
         else: 
             #Duplicated gene and cell names are removed
             df=df.loc[~df.index.duplicated(), ~df.columns.duplicated()]
-            self.signal_genes=df.columns[(df.sum()>min_tpm)
+            self.signal_genes=df.columns[(df.sum()>min_tp)
                                          & (df.apply(lambda x: 
-                                           np.count_nonzero(x))>=30)].tolist()
+                                           np.count_nonzero(x))>=30)]
             
-            self.signal_cells=df.index[(df.sum(axis=1)>min_tpm) 
+            self.signal_cells=df.index[(df.sum(axis=1)>min_tp) 
                                         & (df.apply(lambda x: 
-                                           np.count_nonzero(x), axis=1)>=100)].tolist()
-            #self.filtered_genes=df.columns[df.sum()<=min_tpm].tolist()
-            #self.filtered_cells=df.index[df.T.sum()<=min_tpm].tolist()
+                                           np.count_nonzero(x), axis=1)>=100)]
+            #self.filtered_genes=df.columns[df.sum()<=min_tp].tolist()
+            #self.filtered_cells=df.index[df.T.sum()<=min_tp].tolist()
             df=df.loc[self.signal_cells, self.signal_genes]
             df=self._to_tpm(df)
             df=np.log2(1+df)
@@ -237,8 +237,8 @@ class rm(visualize):
         self.Ln=self.L[s]
         self.n_components=len(self.Ls)
         
-        Vna=Vr[:, len(self.Lr)/2-self.n_components/2:len(self.Lr)/2
-                    + self.n_components/2
+        Vna=Vr[:, len(self.Lr)//2-self.n_components//2:len(self.Lr)//2
+                    + self.n_components//2
                     +(self.n_components)%2]
         
         structure_projected_genes=self._project_genes(self.X, Vs)
@@ -253,8 +253,15 @@ class rm(visualize):
         self._snr=np.square(noise_right_projected_genes).sum(axis=1)
         
         Vs=self.V[:, self.L>self.lambda_c]  
-        self.X=np.dot(np.dot(Vs, Vs.T), self.X)
-    
+        self.Ls=self.L[self.L>self.lambda_c]
+        #self.X=np.dot(np.dot(np.diag(self.Ls)*np.dot(Vs, Vs.T)), self.X)
+        self.Vs=Vs
+        #self.X=np.dot(np.dot(np.sqrt(self.Ls)*Vs,
+         #                    (np.sqrt(self.Ls)*Vs).T)
+        #             , self.X)
+        self.X=np.dot(np.dot(Vs, Vs.T) 
+                     ,self.X)  #X=U S V^T= U(V S)^T= U (X^T U)^T = U U^T X
+              
     def return_cleaned(self, fdr=0.001):
         ''' Method returns the dataframe with denoised single cell data
         if fdr == True, return method returns structure genes up to the fdr level
@@ -658,7 +665,8 @@ class rm(visualize):
         alpha, loc, beta=stats.gamma.fit(x, loc=0, scale=1)
         return (alpha, loc, beta)
 
-    def _gamma_pdf(self, x, (alpha, loc, beta)):
+    def _gamma_pdf(self, x, fits):
+        alpha, loc, beta = fits
         y=stats.gamma(a=alpha, loc=loc, scale=beta).pdf(x)
         return y
 
