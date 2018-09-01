@@ -1,6 +1,6 @@
 # randomly
-Python3 Package for denoising single cell with Random Matrix 
-
+Python3 Package for denoising single-cell data  with Random Matrix Theory.
+Please see example.ipynb for the denosing and visualization pipeline.
 **Install Dependencies**
 
 ```
@@ -26,7 +26,7 @@ import pandas as pd
 df = pd.read_table('Data/data.tsv', index_col=0)
 
 # run code
-model=randomly.rm()
+model=randomly.Rm()
 model.preprocess(df)
 model.fit()
 ```
@@ -34,8 +34,15 @@ model.fit()
 Plotting
 
 ```
-model.plot_mp(path='../Figures/mp.pdf')
-model.plot_statistics(path='../Figures/statistics.pdf')
+model.plot_mp(path = '../Figures/mp.pdf')
+model.plot_statistics(path = '../Figures/statistics.pdf')
+model.fit_tsne()
 model.plot(type='tsne', path='../Figures/tsne.pdf', s=2)
-df2=model.return_cleaned(fdr=0.001)
+
+
 ```
+Obtaining denoised Data in the form of the pandas dataframe
+(cells, signal genes), where the number of the signal genes is controlled with the false discovery rate fdr (fdr = 1) corresponds to all genes (default fdr = 0.001)
+
+```
+df2=model.return_cleaned(fdr=0.001)
