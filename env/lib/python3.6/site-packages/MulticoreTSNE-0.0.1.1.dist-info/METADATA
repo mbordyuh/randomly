@@ -1,0 +1,19 @@
+Metadata-Version: 2.0
+Name: MulticoreTSNE
+Version: 0.0.1.1
+Summary: Multicore version of t-SNE algorithm.
+Home-page: https://github.com/DmitryUlyanov/Multicore-TSNE
+Author: Dmitry Ulyanov (based on L. Van der Maaten's code)
+Author-email: dmitry.ulyanov.msu@gmail.com
+License: UNKNOWN
+Description-Content-Type: UNKNOWN
+Platform: UNKNOWN
+Requires-Dist: numpy
+Requires-Dist: cffi
+Provides-Extra: test
+Requires-Dist: scikit-learn; extra == 'test'
+Requires-Dist: scipy; extra == 'test'
+
+UNKNOWN
+
+

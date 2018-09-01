@@ -1,5 +1,5 @@
 # randomly
-Python Package for denoising single cell with Random Matrix 
+Python3 Package for denoising single cell with Random Matrix 
 
 **Install Dependencies**
 
