@@ -1,5 +1,7 @@
 # randomly
 Python3 Package for denoising single-cell data  with the  Random Matrix Theory. Please see example.ipynb for the denosing and visualization pipeline.
+
+
 **Install Dependencies**
 
 ```
@@ -38,6 +40,8 @@ model.plot_statistics(path = '../Figures/statistics.pdf')
 model.fit_tsne()
 model.plot(path = '../Figures/tsne.pdf')
 
+```
+
 **Denoising the data**
 
 ```
@@ -46,4 +50,5 @@ To obtaining denoised data in the form of the pandas dataframe
 (cells, signal genes), where the number of the signal genes is controlled with the false discovery rate fdr (fdr = 1) corresponds to all genes (default fdr = 0.001)
 
 ```
+
 df2=model.return_cleaned()
