@@ -20,11 +20,11 @@ c) t-SNE plot of denoised data (tsne.pdf)
 ```
 import randomly
 
-# load example
+#load a toy example of single-cell data
 import pandas as pd
 df = pd.read_table('Data/data.tsv', index_col=0)
 
-# run code
+# run the code
 model=randomly.Rm()
 model.preprocess(df)
 model.fit()
@@ -36,13 +36,14 @@ Plotting
 model.plot_mp(path = '../Figures/mp.pdf')
 model.plot_statistics(path = '../Figures/statistics.pdf')
 model.fit_tsne()
-model.plot(type='tsne', path='../Figures/tsne.pdf', s=2)
+model.plot(path = '../Figures/tsne.pdf')
 
+**Denoising the data**
 
 ```
-**Denoising data**
+
 To obtaining denoised data in the form of the pandas dataframe
 (cells, signal genes), where the number of the signal genes is controlled with the false discovery rate fdr (fdr = 1) corresponds to all genes (default fdr = 0.001)
 
 ```
-df2=model.return_cleaned(fdr=0.001)
+df2=model.return_cleaned()
