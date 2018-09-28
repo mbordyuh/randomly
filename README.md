@@ -1,54 +1,54 @@
 # randomly
-Python3 Package for denoising single-cell data  with the  Random Matrix Theory. Please see example.ipynb for the denosing and visualization pipeline.
 
+Python3 module for denoising single-cell data through Random Matrix Theory. Please see example.ipynb for the denoising and visualization pipeline.
 
-**Install Dependencies**
+**Installation Dependencies**
 
-```
+```shell
 pip install -r requirements.txt
 ```
 
-**Example of usage**
+**Usage Example**
 
-df - pandas dataframe : Pandas dataframe, shape (n_cells, n_genes)
-index correspond the cell name and columns correspond the unique gene names
+Input parameters:
+- df : pandas DataFrame, shape (n_cells, n_genes) where cell barcodes are stored in the index and gene symbols in the columns
 
-return denoised df2 pandas datarame for download and 
-3 plots:  
-a) Marchnko-Pastur distribuiton plot (mp.pdf)   
-b) Gene statistics (statistics.pdf)  
-c) t-SNE plot of denoised data (tsne.pdf)  
+Results:
+- df_denoised : pandas DataFrame, shape (n_cells, n_signal_genes)
 
-```
+Additional plots:  
+a) Marchenko-Pastur distribution plot
+b) Statistics on genes
+c) t-SNE plot of denoised data
+
+***Preparation***
+
+```python
+import pandas as pd
 import randomly
 
-#load a toy example of single-cell data
-import pandas as pd
-df = pd.read_table('Data/data.tsv', index_col=0)
+# Data loading
+df = pd.read_table('Data/data.tsv', sep='\t', index_col=0)
 
-# run the code
-model=randomly.Rm()
+# Model fitting on input data
+model = randomly.Rm()
 model.preprocess(df)
 model.fit()
 ```
 
-Plotting
+***Plotting***
 
-```
-model.plot_mp(path = '../Figures/mp.pdf')
-model.plot_statistics(path = '../Figures/statistics.pdf')
+```python
+model.plot_mp(path = 'Figures/mp.pdf')
+model.plot_statistics(path = 'Figures/statistics.pdf')
 model.fit_tsne()
-model.plot(path = '../Figures/tsne.pdf')
-
+model.plot(path = 'Figures/tsne.pdf')
 ```
 
-**Denoising the data**
+***Data Denoising***
 
+Denoised data is returned through a pandas DataFrame of shape (cells, signal genes), where the number of signal genes is controlled through the False Discovery Rate parameter (fdr = 1 corresponds to all genes, default fdr = 0.001)
+
+```python
+df_denoised = model.return_cleaned()
 ```
-
-To obtaining denoised data in the form of the pandas dataframe
-(cells, signal genes), where the number of the signal genes is controlled with the false discovery rate fdr (fdr = 1) corresponds to all genes (default fdr = 0.001)
-
-```
-
-df2=model.return_cleaned()
