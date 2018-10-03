@@ -298,7 +298,7 @@ class Rm(Visualize, Cluster):
                 Cleaned matrix
         '''
         df = pd.DataFrame(self.X)
-        df.index = self.cell_names
+        df.index = self.signal_cells
         df.columns = self.signal_genes
         df = df#+self.mean_
         if fdr == 1:
