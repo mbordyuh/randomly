@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-"""Main module."""
-
 import pandas as pd
 import numpy as np
 from scipy import stats, linalg
