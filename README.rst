@@ -19,10 +19,12 @@ Authors
 
 Mykola Bordyuh, Luis Aparicio (equal contribution).
 
-Dependencies
+Installation
 ------------
 
-TODO
+.. code:: shell
+    
+    pip install --upgrade git+https://github.com/RabadanLab/randomly
 
 Usage 
 -----
