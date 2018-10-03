@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 """
 Visualization of Marchenko Pastur algorithm and implementation
