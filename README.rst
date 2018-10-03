@@ -17,7 +17,7 @@ Python3 module for denoising single-cell data through Random Matrix Theory. Plea
 Authors
 -------
 
-Luis Aparicio, Mykola Bordyuh
+Mykola Bordyuh, Luis Aparicio (equal contribution).
 
 Dependencies
 ------------
