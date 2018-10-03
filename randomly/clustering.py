@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Implementations of several clustering Algorithms based on scikit-learn library
 """
 
