@@ -28,47 +28,53 @@ Usage
 -----
 
 Input parameters:
+
 - df : pandas DataFrame, shape (n_cells, n_genes) where cell barcodes are stored in the index and gene symbols in the columns
 
 Results:
+
 - df_denoised : pandas DataFrame, shape (n_cells, n_signal_genes)
 
 Additional plots:  
+
 - Marchenko-Pastur distribution plot
 - Statistics on genes
 - t-SNE plot of denoised data
 
 ***Preparation***
 
-```python
-import pandas as pd
-import randomly
+.. code:: python
+    
+    import pandas as pd
+    import randomly
 
-# Data loading
-df = pd.read_table('Data/data.tsv', sep='\t', index_col=0)
+    # Data loading
+    df = pd.read_table('Data/data.tsv', sep='\t', index_col=0)
 
-# Model fitting on input data
-model = randomly.Rm()
-model.preprocess(df)
-model.fit()
-```
+    # Model fitting on input data
+    model = randomly.Rm()
+    model.preprocess(df)
+    model.fit()
+
 
 ***Plotting***
 
-```python
-model.plot_mp(path = 'Figures/mp.pdf')
-model.plot_statistics(path = 'Figures/statistics.pdf')
-model.fit_tsne()
-model.plot(path = 'Figures/tsne.pdf')
-```
+.. code:: python
+
+    model.plot_mp(path = 'Figures/mp.pdf')
+    model.plot_statistics(path = 'Figures/statistics.pdf')
+    model.fit_tsne()
+    model.plot(path = 'Figures/tsne.pdf')
+
 
 ***Data Denoising***
 
 Denoised data is returned through a pandas DataFrame of shape (cells, signal genes), where the number of signal genes is controlled through the False Discovery Rate parameter (fdr = 1 corresponds to all genes, default fdr = 0.001)
 
-```python
-df_denoised = model.return_cleaned()
-```
+.. code:: python
+    
+    df_denoised = model.return_cleaned()
+
 
 License and documentation
 -------------------------
