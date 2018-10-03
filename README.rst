@@ -29,11 +29,13 @@ Usage
 
 Input parameters:
 
-- df : pandas DataFrame, shape (n_cells, n_genes) where cell barcodes are stored in the index and gene symbols in the columns
+- df :
+    pandas DataFrame, shape (n_cells, n_genes)
 
 Results:
 
-- df_denoised : pandas DataFrame, shape (n_cells, n_signal_genes)
+- df_denoised :
+    pandas DataFrame, shape (n_cells, n_signal_genes)
 
 Additional plots:  
 
@@ -41,7 +43,7 @@ Additional plots:
 - Statistics on genes
 - t-SNE plot of denoised data
 
-***Preparation***
+**Preparation**
 
 .. code:: python
     
@@ -57,7 +59,7 @@ Additional plots:
     model.fit()
 
 
-***Plotting***
+**Plotting**
 
 .. code:: python
 
@@ -67,7 +69,7 @@ Additional plots:
     model.plot(path = 'Figures/tsne.pdf')
 
 
-***Data Denoising***
+**Data Denoising**
 
 Denoised data is returned through a pandas DataFrame of shape (cells, signal genes), where the number of signal genes is controlled through the False Discovery Rate parameter (fdr = 1 corresponds to all genes, default fdr = 0.001)
 
