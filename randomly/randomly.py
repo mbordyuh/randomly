@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-"""Main module."""
-
 import pandas as pd
 import numpy as np
 from scipy import stats, linalg
@@ -298,7 +294,7 @@ class Rm(Visualize, Cluster):
                 Cleaned matrix
         '''
         df = pd.DataFrame(self.X)
-        df.index = self.signal_cells
+        df.index = self.cell_names
         df.columns = self.signal_genes
         df = df#+self.mean_
         if fdr == 1:

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''Aestehetic color palettes for visualization'''
 
 pallete_50=['#9af764', '#3e82fc', '#fe0002', '#f4d054', '#ed0dd9', '#13eac9', '#e4cbff', '#b1d27b' 
