@@ -9,12 +9,11 @@ class Cluster():
     '''Attributes
        ----------
 
-       X: array-like or sparse matrix, shape=(n_samples, n_cells)
+       X: array-like or sparse matrix, shape=(n_cells, n_genes)
           Training instances to clustering
 
        labels:
        Labels for each data point
-
     '''
 
     def __init__(self):
