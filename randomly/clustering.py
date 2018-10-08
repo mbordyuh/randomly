@@ -1,16 +1,26 @@
-"""Implementations of several clustering Algorithms based on scikit-learn library
+"""Implementations of several clustering
+algorithms based on scikit-learn library
 """
 
 from sklearn.cluster import KMeans
-import numpy as np
-import pandas as pd
-from collections import defaultdict
+
 
 class Cluster():
-    
+    '''Attributes
+       ----------
+
+       X: array-like or sparse matrix, shape=(n_samples, n_cells)
+          Training instances to clustering
+
+       labels:
+       Labels for each data point
+
+    '''
+
     def __init__(self):
-        self.X=None
+        self.X = None
+
     def fit_kmeans(self, n_clusters=2, random_state=1):
-        kmeans_model = KMeans(n_clusters=n_clusters, random_state=1).fit(self.X)
-        self.labels=kmeans_model.labels_
-        
+        kmeans_model = KMeans(n_clusters=n_clusters,
+                              random_state=1).fit(self.X)
+        self.labels = kmeans_model.labels_

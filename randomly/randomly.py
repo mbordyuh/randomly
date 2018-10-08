@@ -10,59 +10,58 @@ class Rm(Visualize, Cluster):
     """Random Matrix Theory Analysis of Principal Components
     Parameters
     ----------
-    eigen_solver : string {'wishart'}. Find eigenvalue and eigenvectors 
-        wishart : Compute wishart matrix and find eigenvalues and eigenvectors
+    eigen_solver: string {'wishart'}. Find eigenvalue and eigenvectors
+        wishart: Compute wishart matrix and find eigenvalues and eigenvectors
         of the Wishart matrix
 
-    tol : float >= 0, optional (default .0)
+    tol: float >= 0, optional (default .0)
         Tolerance for singular values computed by svd_solver == 'arpack'.
-    
-    preprocessing: string {'sc','False'}
+    preprocessing: string {'sc', 'False'}
             sc: run single cell preprocessing
             False: skip preprocessing
-            
-    random_state : int, RandomState instance or None, optional (default None)
+
+    random_states: int, RandomState instance or None, optional (default None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-    
+
     Attributes
     ----------
-    components_ : array, shape (n_components, n_genes)
+    components_: array, shape (n_components, n_genes)
         Principal axes in feature space, representing the directions of
         maximum variance in the data. The components are sorted by
         ``explained_variance_``.
-    
-    explained_variance_ : array, shape (n_components,)
+
+    explained_variance_: array, shape (n_components,)
         The amount of variance explained by each of the selected components.
         Equal to n_components largest eigenvalues
         of the covariance matrix of X.
-     
-    explained_variance_ratio_ : array, shape (n_components,)
+
+    explained_variance_ratio_: array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
         If ``n_components`` is not set then all components are stored and the
         sum of explained variances is equal to 1.0.
-       
-    mean_ : array, shape (n_features,)
+
+    mean_: array, shape (n_features,)
         Per-gene empirical mean, estimated from the original set.
-    
-    noise_variance_ : float
+
+    noise_variance_: float
         The estimated noise covariance
-    
-    cell_names : list of cell names
-    
+
+    cell_names: list of cell names
+
     gene_names: list of gene names
-    
-    X: 2D array 
+
+    X: 2D array
         Preprocessed single cell matrix
-    
+
     n_cells: int
-    number of cells 
-    
+    number of cells
+
     n_genes: int
-     number of genes 
-    
+     number of genes
+
     L: list
         Eigenvalues of the Wishart matrix
     V: 2D array
@@ -70,26 +69,26 @@ class Rm(Visualize, Cluster):
 
     Lr: list
         Eigenvalues of the Wishart randomized matrix
-    
+
     Vr: 2D array
         Eigenvectors of the Wishart randomized matrix
-    
-    L_mp: list
+
+        L_mp: list
         Estimated Marchenko - Pastur Eigenvalues
 
     lambda_c: float
          Critical eigenvalues estimated by Tracy - Widom distribution
-    
+
     n_components: int
         Number of components above the Marchenko - Pastur distribution
-    
-    gamma: float 
+
+    gamma: float
             Estimated gamma of the Marchenko - Pastur distribuiton
 
     sigma: float
         Estimated sigma of the Marchenko - Pastur distribution
-    
-    b_plus: float 
+
+    b_plus: float
         Estimated upper bound of the Marchenko - Pastur distribution
 
     b_minus: float
@@ -107,8 +106,8 @@ class Rm(Visualize, Cluster):
         self.L = []
         self.V = None
         self.X = None
-        self.Lr=[]
-        self.explained_variance_= []
+        self.Lr = []
+        self.explained_variance_ = []
         self.total_variance_ = []
         self.L_mp = []
         self.lambda_c = 0
@@ -120,11 +119,11 @@ class Rm(Visualize, Cluster):
         self.b_plus = 0
         self.b_minus = 0
         self._preprocessing_flag = False
-       
-    def preprocess(self, df, 
-                         min_tp = 100, 
-                         min_genes_per_cell = 10, 
-                         min_cells_per_gene = 10):
+
+    def preprocess(self, df,
+                         min_tp=100,
+                         min_genes_per_cell=10,
+                         min_cells_per_gene=10):
         """The method executes preprocessing of the data by removing 
         1. Genes and cells that have less than 100 transcripts by default. 
         2. Cells are removed that express less than min_tp genes
@@ -138,7 +137,7 @@ class Rm(Visualize, Cluster):
         
         Parameters
         ----------
-        df : Pandas dataframe, shape (n_cells, n_genes)
+        df: Pandas dataframe, shape (n_cells, n_genes)
             where n_cells in the number of cells
             and n_genes is the number of genes.
         
@@ -147,7 +146,7 @@ class Rm(Visualize, Cluster):
             in every cell and every gene
         Returns
         -------
-        self : self
+        self: self
             Returns the instance itself.
         """
         
@@ -184,11 +183,11 @@ class Rm(Visualize, Cluster):
         
         Parameters
         ----------
-        df : Pandas dataframe, shape (n_cells, n_genes)
+        df: Pandas dataframe, shape (n_cells, n_genes)
             where n_cells in the number of cells
             and n_genes is the number of genes.
         -------
-        self : object
+        self: object
             Returns the instance itself.
         """
         if self._preprocessing_flag:
@@ -209,7 +208,7 @@ class Rm(Visualize, Cluster):
         """
         self.mean_=np.mean(self.X, axis=0)
         self.std_=np.std(self.X, axis=0, ddof=0)
-        self.X=(self.X-self.mean_)/(self.std_+0.0)
+        self.X=(self.X-self.mean_)/(self.std_ + 0.0)
         
         """Dispatch to the right submethod depending on the chosen solver"""
         if self.eigen_solver == 'wishart':
@@ -219,7 +218,7 @@ class Rm(Visualize, Cluster):
             Yr = self._wishart_matrix(Xr)
             (self.Lr, Vr) = self._get_eigen(Yr)
         
-            self.explained_variance_ = (self.L ** 2) / (self.n_cells)
+            self.explained_variance_ = (self.L**2) / (self.n_cells)
             self.total_variance_ = self.explained_variance_.sum()
         
             self.L_mp = self._mp_calculation(self.L, self.Lr)   
@@ -228,14 +227,14 @@ class Rm(Visualize, Cluster):
         else: 
             print('Solver is undefined, please use Wishart Matrix as eigenvalue solver')
         
-        #self.L[-2:]=0
+        # self.L[-2:]=0
         self.Ls = self.L[self.L > self.lambda_c]
         Vs = self.V[:, self.L > self.lambda_c]
-        #Remove first 2 components
-        #self.Ls=self.Ls[:-2]
-        #Vs=Vs[:,:-2]
-        #self.V=self.V[:,:-1]
-        #self.L=self.L[:,-1]
+        # Remove first 2 components
+        # self.Ls=self.Ls[:-2]
+        # Vs=Vs[:,:-2]
+        # self.V=self.V[:,:-1]
+        # self.L=self.L[:,-1]
         
         
         self.Vs=Vs
@@ -244,7 +243,7 @@ class Rm(Visualize, Cluster):
         self.Ln = self.L[noise_boolean]
         self.n_components = len(self.Ls)
         
-        Vna = Vr[:, len(self.Lr)//2 - self.n_components//2 : len(self.Lr)//2
+        Vna = Vr[:, len(self.Lr)//2 - self.n_components//2: len(self.Lr)//2
                     + self.n_components//2
                     +(self.n_components)%2]
         
@@ -257,11 +256,11 @@ class Rm(Visualize, Cluster):
         noise_projected_genes = self._project_genes(self.X,  Vn)
         
 
-        #print(noise_right_projected_genes)
-        self._s = np.square(signal_projected_genes).sum(axis = 1)
-        self._sa = np.square(random_projected_genes).sum(axis = 1)
-        self._snl = np.square(noise_left_projected_genes).sum(axis = 1)
-        self._snr = np.square(noise_right_projected_genes).sum(axis = 1)
+        # print(noise_right_projected_genes)
+        self._s = np.square(signal_projected_genes).sum(axis=1)
+        self._sa = np.square(random_projected_genes).sum(axis=1)
+        self._snl = np.square(noise_left_projected_genes).sum(axis=1)
+        self._snr = np.square(noise_right_projected_genes).sum(axis=1)
         
         self.components_genes = dict()
         for j in range(self.n_components):
@@ -270,27 +269,28 @@ class Rm(Visualize, Cluster):
                                        > 10 * np.max(np.square(noise_projected_genes), axis=1)
                                                               ]
 
-        #self.X=np.dot(np.dot(np.diag(self.Ls)*np.dot(Vs, Vs.T)), self.X)
-        #self.X=np.dot(np.dot(np.sqrt(self.Ls)*Vs,
-         #                    (np.sqrt(self.Ls)*Vs).T)
+        # self.X=np.dot(np.dot(np.diag(self.Ls)*np.dot(Vs, Vs.T)), self.X)
+        # self.X=np.dot(np.dot(np.sqrt(self.Ls)*Vs,
+        #                    (np.sqrt(self.Ls)*Vs).T)
         #             , self.X)
         self.X = np.dot(np.dot(Vs, Vs.T),
-                         self.X)  #X=U S V^T= U(V S)^T= U (X^T U)^T = U U^T X ~ Us Us^T X
+                         self.X)  # X=U S V^T= U(V S)^T= U (X^T U)^T = U U^T X ~ Us Us^T X
               
-    def return_cleaned(self, fdr = 0.001):
-        ''' Method returns the dataframe with denoised single cell data
-        if fdr == True, return method returns structure genes up to the fdr level
+    def return_cleaned(self, fdr=0.001):
+        ''' Method returns the dataframe with denoised single 
+        cell data if fdr == True, return method returns structure 
+        genes up to the fdr level
         
         Parameters
         ----------
-        path : string
+        path: string
                 Path to save the plot
         fdr_cut: float
         
 
         Returns
         -------
-        object : Pandas DataFrame shape(n_cells, n_genes)
+        object: Pandas DataFrame shape(n_cells, n_genes)
                 Cleaned matrix
         '''
         df = pd.DataFrame(self.X)
@@ -307,7 +307,7 @@ class Rm(Visualize, Cluster):
 
     def _to_tpm(self, X):
         '''Transform transcripts to transcripts per million'''
-        ##df2=df.T/(df.sum(axis=1))*10**(6) return df2.T
+        # df2=df.T/(df.sum(axis=1))*10**(6) return df2.T
         return  np.transpose(np.transpose(X) / 
                               np.sum(X, axis=1) * 10**(6)
                               )
@@ -346,14 +346,14 @@ class Rm(Visualize, Cluster):
         s = moment_1
         sigma = moment_2
         b_plus = s * (1 + np.sqrt(gamma))**2
-        b_minus = s* (1 - np.sqrt(gamma))**2
+        b_minus = s * (1 - np.sqrt(gamma))**2
         x_peak = s * (1.0-gamma)**2.0 / (1.0+gamma)
-        dic={'moment_1' : moment_1,
-             'moment_2' : moment_2,
-             'gamma' : gamma,
-             'b_plus' : b_plus,
-             'b_minus' : b_minus,
-             's' : s,
+        dic={'moment_1': moment_1,
+             'moment_2': moment_2,
+             'gamma': gamma,
+             'b_plus': b_plus,
+             'b_minus': b_minus,
+             's': s,
              'peak': x_peak
              }
         return dic
@@ -370,13 +370,13 @@ class Rm(Visualize, Cluster):
         y = vfunc(x, self._mp_parameters(L))
         return y
 
-    def _mp_calculation(self, L, Lr, eta = 1, eps = 10**-6, max_iter = 1000):
+    def _mp_calculation(self, L, Lr, eta=1, eps=10**-6, max_iter=1000):
         converged = False
         iter = 0
         loss_history = []
         b_plus = self._mp_parameters(Lr)['b_plus']
         b_minus = self._mp_parameters(Lr)['b_minus']
-        L_updated = L[(L > b_minus) & (L < b_plus)]
+        L_updated = L[(L>b_minus) & (L<b_plus)]
         new_b_plus = self._mp_parameters(L_updated)['b_plus']
         new_b_minus = self._mp_parameters(L_updated)['b_minus']
         while not converged:
@@ -408,7 +408,7 @@ class Rm(Visualize, Cluster):
         return np.dot(X, np.dot(X.T, V))
 
     def get_gene_norm(self, X):
-        return np.sqrt(np.square(X).sum(axis = 0) / X.shape[0])
+        return np.sqrt(np.square(X).sum(axis=0) / X.shape[0])
 
     def plot_mp(self, comparison=True, path=False,
                 info=True, bins=None, title=None):
@@ -418,40 +418,40 @@ class Rm(Visualize, Cluster):
 
         Parameters
         ----------
-        path : string
+        path: string
                 Path to save the plot
-        fit : boolean
+        fit: boolean
             The data.
         fdr_cut: float
         
 
         Returns
         -------
-        object : plot
+        object: plot
             
         """
         if bins is None:
             bins=self.n_cells
-        x=np.linspace(0, int(round(np.max(self.L_mp) +1 )), 2000)
-        y=self._mp_pdf(x, self.L_mp)
-        yr=self._mp_pdf(x, self.Lr)
-        
+        x = np.linspace(0, int(round(np.max(self.L_mp) +1 )), 2000)
+        y = self._mp_pdf(x, self.L_mp)
+        yr = self._mp_pdf(x, self.Lr)
+
         if info:
-            fig = plt.figure(dpi = 100)
+            fig = plt.figure(dpi=100)
             fig.set_tight_layout(False)
-                    
+        
             ax = fig.add_subplot(111)
         else:
-            plt.figure(dpi = 100)
-                    
-        plot=sns.distplot(self.L,
+            plt.figure(dpi=100)
+
+        plot = sns.distplot(self.L,
                          bins=bins,
-                         norm_hist = True,
+                         norm_hist=True,
                          kde=False,
                          hist_kws={"alpha": 0.85,
-                         "color" : sns.xkcd_rgb["cornflower blue"]})   
+                         "color": sns.xkcd_rgb["cornflower blue"]})   
         
-        plot.set(xlabel = 'First cell eigenvalues normalized distribution')
+        plot.set(xlabel='First cell eigenvalues normalized distribution')
         plt.plot(x, y,
                  sns.xkcd_rgb["pale red"],
                  lw=2)
@@ -461,7 +461,7 @@ class Rm(Visualize, Cluster):
                          kde=False,
                          hist_kws={"histtype": "step", "linewidth": 3,
                          "alpha": 0.75,
-                         "color":sns.xkcd_rgb["apple green"]}
+                         "color": sns.xkcd_rgb["apple green"]}
                         )
             
             plt.plot(x, yr,
@@ -470,18 +470,18 @@ class Rm(Visualize, Cluster):
                      ls='--'
                     )
             
-            plt.legend(['MP for random part in data','MP for randomized data',
-                        'Randomized data','Real data'],
+            plt.legend(['MP for random part in data','MP for randomized data', 
+                        'Randomized data','Real data'], 
                         loc="upper right",
                         frameon=True)    
         
         else: 
             plt.legend(['MP for random part in data', 'Real data'],
                         loc="upper right",
-                        frameon=True),       
+                        frameon=True)   
         
         plt.xlim([0, int(round(max(np.max(self.Lr), np.max(self.L_mp))
-                                +0.5))])
+                         + 0.5))])
         plt.grid()
         if title:
             plt.title(title)
@@ -489,135 +489,135 @@ class Rm(Visualize, Cluster):
         if info:
             dic = self._mp_parameters(self.L_mp)
             info1 = (r'$\bf{Data Parameters}$' + '\n{0} cells\n{1} genes'
-                    .format(self.n_cells, self.n_genes))
+                     .format(self.n_cells, self.n_genes))
             info2 = ('\n' + r'$\bf{MP\ distribution\ in\ data}$'
-                    +'\n$\gamma={:0.2f}$ \n$\sigma^2={:1.2f}$ \n$b_-={:2.2f}$\n$b_+={:3.2f}$'
-                    .format(dic['gamma'], dic['s'], dic['b_minus'], dic['b_plus']))
+                     +'\n$\gamma={:0.2f}$ \n$\sigma^2={:1.2f}$ \n$b_-={:2.2f}$\n$b_+={:3.2f}$'
+                     .format(dic['gamma'], dic['s'], dic['b_minus'], dic['b_plus']))
             info3 = ('\n' + r'$\bf{Analysis}$' +
-                     '\n{0} eigenvalues > $\lambda_c (3 \sigma)$\n{1} noise eigenvalues'\
-                   .format(self.n_components, self.n_cells - self.n_components))
-            
-            infoT= info1 + info2 + info3
-            props = dict(boxstyle = 'round', facecolor='wheat', alpha = 0.8)
-            
-            at=AnchoredText(infoT, loc=2, prop = dict(size = 10),
-                            frameon=True,
-                            bbox_to_anchor=(1., 1.024),
-                            bbox_transform=ax.transAxes)
+                     '\n{0} eigenvalues > $\lambda_c (3 \sigma)$\n{1} noise eigenvalues'
+                     .format(self.n_components, self.n_cells - self.n_components))
+
+            infoT = info1 + info2 + info3
+            props = dict(boxstyle='round', facecolor='wheat',
+                         alpha=0.8)
+
+            at = AnchoredText(infoT, loc=2, prop=dict(size=10),
+                              frameon=True,
+                              bbox_to_anchor=(1., 1.024),
+                              bbox_transform=ax.transAxes)
             at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
             lgd=ax.add_artist(at)
-         
-        
-            if path:    
+
+            if path:
                 plt.savefig(path, bbox_extra_artists=(lgd,), bbox_inches='tight')
         else:
-            if path:    
+            if path:
                 plt.savefig(path)
         plt.show()
         return
-    
+
     def plot_statistics(self, path=False, fit=True):
         """Plot statistics, describe
-       
+
         Parameters
         ----------
-        path : string
+        path: string
                 Path to save the plot
-        fit : boolean
+        fit: boolean
             The data.
         fdr_cut: float
-        
 
         Returns
         -------
-        object : plot
-            
+        object: plot
+
         """
         gs = gridspec.GridSpec(2, 2)
         fig = plt.figure(dpi=100, figsize=[9, 4.4])
         fig.set_tight_layout(False)
         ax = plt.subplot(gs[0, 0])
         ax0 = plt.subplot2grid((1, 3), (0, 0), colspan=2)
-        
-        sns.distplot(self._sa, 
-                     norm_hist = True,
-                     kde = False, 
-                     bins = 100, 
-                     hist_kws = {"alpha" : 0.8,
-                                 "color" : sns.xkcd_rgb["golden yellow"],
-                                 "zorder" : 1})
+
+        sns.distplot(self._sa,
+                     norm_hist=True,
+                     kde=False,
+                     bins=100,
+                     hist_kws={"alpha": 0.8,
+                               "color": sns.xkcd_rgb["golden yellow"],
+                               "zorder": 1})
         sns.distplot(self._s,
-                     norm_hist = True,
-                     kde = False,
-                     bins = 200,  
-                    hist_kws={"alpha" : 0.6,
-                                "color" : sns.xkcd_rgb["cerulean"],
-                                "zorder" : 3})
+                     norm_hist=True,
+                     kde=False,
+                     bins=200,  
+                     hist_kws={"alpha": 0.6,
+                               "color": sns.xkcd_rgb["cerulean"],
+                               "zorder": 3})
         sns.distplot(self._snl,
-                     norm_hist = True,
-                     kde = False,
-                     bins = 100,
-                    hist_kws={"alpha" : 0.55,
-                              "color" : sns.xkcd_rgb["leaf green"],
-                              "zorder" : 5})
+                     norm_hist=True,
+                     kde=False,
+                     bins=100,
+                     hist_kws={"alpha": 0.55,
+                               "color": sns.xkcd_rgb["leaf green"],
+                               "zorder": 5})
         sns.distplot(self._snr,
                      norm_hist=True,
                      kde=False,
                      bins=100,
-                        hist_kws={"alpha" : 0.5,
-                                   "color" : sns.xkcd_rgb["cerise"],
-                                  "zorder" : 7})
-        
+                     hist_kws={"alpha": 0.5,
+                               "color": sns.xkcd_rgb["cerise"],
+                               "zorder": 7})
+
         plt.xlim([0, 2 * np.max(self._snr)])
         plt.xlabel('Normalized sample variance')
         plt.ylabel('Sample variance probability distribution')
 
-        hist_sa=mpatches.Patch(color = sns.xkcd_rgb["golden yellow"],
-                               label='{0} random vectors'.format(self.n_components),
-                               alpha=0.8)
-        hist_s=mpatches.Patch(color = sns.xkcd_rgb["cerulean"],
-                              label='All {0} signal eigenvectors'.format(self.n_components),
-                              alpha=0.6)
-        hist_snl=mpatches.Patch(color=sns.xkcd_rgb["leaf green"],
-                                label='Lowest {0} MP eigenvectors'.format(self.n_components),
-                                alpha=0.55)
-        hist_snr=mpatches.Patch(color=sns.xkcd_rgb["cerise"], 
-                                label = 'Largest {0} MP eigenvectors'.format(self.n_components),
-                                alpha = 0.5)
-       
-        xgr=np.linspace(0, np.max(self._snr), 1000)
-        y_fdr=np.vectorize(self._fdr)(xgr)
-        
-        if fit:        
-            xgl=np.linspace(0, np.max(self._snl), 1000)
-            xk=np.linspace(0, np.max(self._sa), 1000)
-            xs=np.linspace(0, np.max(self._s) + 0.0, 1000)
+        hist_sa = mpatches.Patch(color=sns.xkcd_rgb["golden yellow"],
+                                 label='{0} random vectors'.format(self.n_components),
+                                 alpha=0.8)
+        hist_s = mpatches.Patch(color=sns.xkcd_rgb["cerulean"],
+                                label='All {0} signal eigenvectors'.format(self.n_components),
+                                alpha=0.6)
+        hist_snl = mpatches.Patch(color=sns.xkcd_rgb["leaf green"],
+                                  label='Lowest {0} MP eigenvectors'.format(self.n_components),
+                                  alpha=0.55)
+        hist_snr = mpatches.Patch(color=sns.xkcd_rgb["cerise"],
+                                  label='Largest {0} MP eigenvectors'.format(self.n_components),
+                                  alpha=0.5)
 
-            fits=self._fit_gamma(self._s)
-            fitl=self._fit_gamma(self._snl)
-            fitr=self._fit_gamma(self._snr)
-            ygl=self._gamma_pdf(xgl, fitl)
-            ygr=self._gamma_pdf(xgr, fitr)
-            ys=self._gamma_pdf(xs, fits)
-            y=stats.chi2.pdf(xk, self.n_components)
+        xgr = np.linspace(0, np.max(self._snr), 1000)
+        y_fdr = np.vectorize(self._fdr)(xgr)
+
+        if fit:  
+            xgl = np.linspace(0, np.max(self._snl), 1000)
+            xk = np.linspace(0, np.max(self._sa), 1000)
+            xs = np.linspace(0, np.max(self._s) + 0.0, 1000)
+
+            fits = self._fit_gamma(self._s)
+            fitl = self._fit_gamma(self._snl)
+            fitr = self._fit_gamma(self._snr)
+            ygl = self._gamma_pdf(xgl, fitl)
+            ygr = self._gamma_pdf(xgr, fitr)
+            ys = self._gamma_pdf(xs, fits)
+            y = stats.chi2.pdf(xk, self.n_components)
             
-            plt.plot(xk, y, 
-                    zorder=2,
-                    color=sns.xkcd_rgb["adobe"],
-                    linestyle='--',
-                    linewidth=1.1
+            plt.plot(xk, y,
+                     zorder=2,
+                     color=sns.xkcd_rgb["adobe"],
+                     linestyle='--',
+                     linewidth=1.1
                     )
-            plt.plot(xgl, ygl, 
-                    zorder = 6,
-                    color = sns.xkcd_rgb["grassy green"],
-                    linestyle='-',
-                    linewidth=1.5,
-                    )
+            plt.plot(xgl, ygl,
+                     zorder=6,
+                     color=sns.xkcd_rgb["grassy green"],
+                     linestyle='-',
+                     linewidth=1.5,
+                     )
             plt.plot(xgr, ygr,
                      zorder=8,
                      color=sns.xkcd_rgb["rose red"],
                      linestyle='-',
-                     linewidth=1.5)
+                     linewidth=1.5
+                     )
             plt.plot(xs, ys, 
                      zorder=4,
                      color=sns.xkcd_rgb["blue blue"],
@@ -625,36 +625,37 @@ class Rm(Visualize, Cluster):
                      linewidth=1.5
                     )
           
-            line_gammal = mlines.Line2D([], []
-                                        , color=sns.xkcd_rgb["grassy green"]
-                                        , label=r'Gamma PDF: $\alpha ={:0.1f}$, $\beta = {:1.1f}$'
-                                                .format(fitl[0], 1/fitl[2])
-                                        , linewidth=1.5)
-            line_gammar = mlines.Line2D([], []
-                                        , color = sns.xkcd_rgb["rose red"] 
-                                        , label = r'Gamma PDF: $\alpha ={:0.1f}$,$\beta ={:1.1f}$'        
-                                         .format(fitr[0], 1 / fitr[2]), 
-                                                 linewidth=1.5)
-            line_chi = mlines.Line2D([], []
-                                    , color=sns.xkcd_rgb["adobe"]
-                                    , label='Chi-Squared Distribution'
-                                    , linewidth=1.1, linestyle='--')
+            line_gammal = mlines.Line2D([], [],
+                                        color=sns.xkcd_rgb["grassy green"],
+                                        label=r'Gamma PDF: $\alpha ={:0.1f}$, $\beta = {:1.1f}$'
+                                        .format(fitl[0], 1/fitl[2]),
+                                        linewidth=1.5)
+            line_gammar = mlines.Line2D([], [],
+                                        color=sns.xkcd_rgb["rose red"], 
+                                        label=r'Gamma PDF: $\alpha ={:0.1f}$,$\beta ={:1.1f}$'      
+                                        .format(fitr[0], 1 / fitr[2]),
+                                        linewidth=1.5)
+            line_chi = mlines.Line2D([], [],
+                                     color=sns.xkcd_rgb["adobe"],
+                                     label='Chi-Squared Distribution',
+                                     linewidth=1.1, 
+                                     linestyle='--')
             line_gammas = mlines.Line2D([], [],
-                                         color=sns.xkcd_rgb["blue blue"],
-                                         label=r'Gamma PDF: $\alpha =%.1f$, $\beta = %.2f$'%(fits[0],1/fits[2]),
-                                         linewidth=1.5)
-            plt.legend(handles=[hist_s, line_gammas, hist_snr, line_gammar, hist_snl
-                                , line_gammal, hist_sa, line_chi]
-                                , title=r'$\bf{Gene\ projection\ samples}$'
-                                , loc="upper right"
-                                , frameon=True)
+                                        color=sns.xkcd_rgb["blue blue"],
+                                        label=r'Gamma PDF: $\alpha =%.1f$, $\beta = %.2f$'%(fits[0], 1/fits[2]),
+                                        linewidth=1.5)
+            plt.legend(handles=[hist_s, line_gammas, hist_snr, line_gammar, hist_snl,
+                       line_gammal, hist_sa, line_chi],
+                       title=r'$\bf{Gene\ projection\ samples}$',
+                       loc="upper right",
+                       frameon=True)
         else:
-            plt.legend(handles=[hist_s, hist_snr, hist_snl, hist_sa]
-                               , title=r'$\bf{Gene\ projection\ samples}$'
-                               , loc="upper right"
-                               , frameon=True)
+            plt.legend(handles=[hist_s, hist_snr, hist_snl, hist_sa],
+                       title=r'$\bf{Gene\ projection\ samples}$',
+                       loc="upper right",
+                       frameon=True)
             
-        ax1 = plt.subplot2grid((1, 3), (0, 2))   
+        ax1 = plt.subplot2grid((1, 3), (0, 2))
         host = ax1
         par = ax1.twinx()
 
@@ -666,63 +667,61 @@ class Rm(Visualize, Cluster):
                         ls='--',
                         lw=2,
                         color=sns.xkcd_rgb["pumpkin orange"])
-        p2, = par.plot(xgr, y_fdr[1]
-                        , label="Number of genes"
-                        , ls='-.'
-                        , lw=1.5
-                        , color=sns.xkcd_rgb["violet blue"])
+        p2, = par.plot(xgr, y_fdr[1],
+                       label="Number of genes",
+                       ls='-.',
+                       lw=1.5,
+                       color=sns.xkcd_rgb["violet blue"])
 
         host.yaxis.get_label().set_color(p1.get_color())
         par.yaxis.get_label().set_color(p2.get_color())
 
         line_fdr = mlines.Line2D([], [],
-                                color = sns.xkcd_rgb["pumpkin orange"],
-                                label = 'Ratio signal vs \nlargest {0} MP\ndistributions'
-                                .format(self.n_components),
-                                linewidth=2,
-                                linestyle='--')
+                                 color=sns.xkcd_rgb["pumpkin orange"],
+                                 label='Ratio signal vs \nlargest {0} MP\ndistributions'
+                                 .format(self.n_components),
+                                 linewidth=2,
+                                 linestyle='--')
         line_genes = mlines.Line2D([], [],
-                                    color=sns.xkcd_rgb["violet blue"],
-                                    label='Relevant genes',
-                                    linewidth=1.5,
-                                    linestyle='-.')
+                                   color=sns.xkcd_rgb["violet blue"],
+                                   label='Relevant genes',
+                                   linewidth=1.5,
+                                   linestyle='-.')
         
-        ax1.legend(handles = [line_fdr, line_genes], loc="upper right", frameon=True)
-        
+        ax1.legend(handles=[line_fdr, line_genes], loc="upper right", frameon=True)
         host.set_yscale("log")
         host.grid(True)
         host.set_xlabel('Normalized sample variance')
         host.set_xlim(-2, max(xgr))
 
         plt.tight_layout()
-        
+
         if path:
-            plt.savefig(path)  
+            plt.savefig(path)
         return plt.show()
 
-      
     def _fdr(self, x):
         '''Number of genes for the false discovery rate'''
         area_noise = len(self._snr[self._snr > x])
         area_signal = len(self._s[self._s > x])
-        fdr_x = area_noise/float(area_signal)        
-        genes = self._s[self._s > x].tolist()                        
-        return (fdr_x, len(genes)) 
-    
+        fdr_x = area_noise/float(area_signal)
+        genes = self._s[self._s > x].tolist()
+        return (fdr_x, len(genes))
+
     def _fdr_genes(self, x):
         '''Number of genes for the false discovery rate'''
         area_noise = len(self._snr[self._snr > x])
         area_signal = len(self._s[self._s > x])
-        fdr_x = area_noise / float(area_signal)        
-        genes = self._s[self._s > x].tolist()                        
-        return (fdr_x, x) 
-   
-    def select_genes(self, fdr = 0.001):
+        fdr_x = area_noise / float(area_signal)
+        # genes = self._s[self._s > x].tolist()
+        return (fdr_x, x)
+
+    def select_genes(self, fdr=0.001):
         xgr = np.linspace(0, np.max(self._snr), 1000)
         y_fdr = np.vectorize(self._fdr_genes)(xgr)
         idx = np.abs(y_fdr[0] - fdr).argmin()
-        x = y_fdr[1][idx]  
-        genes = np.array(self.signal_genes)[self._s > x].tolist()                        
+        x = y_fdr[1][idx]
+        genes = np.array(self.signal_genes)[self._s > x].tolist()
         return genes
 
     def _fit_gamma(self, x):
@@ -731,5 +730,5 @@ class Rm(Visualize, Cluster):
 
     def _gamma_pdf(self, x, fits):
         alpha, loc, beta = fits
-        y=stats.gamma(a=alpha, loc=loc, scale=beta).pdf(x)
+        y = stats.gamma(a=alpha, loc=loc, scale=beta).pdf(x)
         return y
