@@ -98,9 +98,9 @@ class Visualize():
             pca = PCA(n_components=n_comp, svd_solver='full')
             X = pca.fit_transform(X)
 
-        n_jobs=multiprocessing.cpu_count()
+        n_jobs = multiprocessing.cpu_count()
 
-        if n_jobs>1 and multicore:
+        if n_jobs > 1 and multicore:
             tsne = MulticoreTSNE(n_jobs=n_jobs, 
                                  perplexity=perplexity)
 
@@ -162,7 +162,7 @@ class Visualize():
                             y='y',
                             fit_reg=False,
                             scatter_kws={'s': psize,
-                                         'alpha':1},
+                                         'alpha': 1},
                             hue='label',
                             data=pd.DataFrame(self.embedding,
                                               columns=  ['x','y'])    
@@ -181,8 +181,8 @@ class Visualize():
                                     markerscale=height//2,
                                     fontsize=height+3)     
 
-                plt.xlabel(xytitle+'1', fontsize=fontsize)
-                plt.ylabel(xytitle+'2', fontsize=fontsize)
+                plt.xlabel(xytitle + '1', fontsize=fontsize)
+                plt.ylabel(xytitle + '2', fontsize=fontsize)
 
 
         elif type(gene) is list:
@@ -190,7 +190,7 @@ class Visualize():
             color=self.X[:, self.signal_genes.isin(gene)].mean(axis=1)
             with plt.style.context('seaborn-paper'):
                 
-                fig=plt.figure(figsize=(height, height+0.5), dpi=100)
+                fig=plt.figure(figsize=(height, height + 0.5), dpi=100)
                 fig.set_tight_layout(False)
             
                 g=plt.scatter(self.embedding[:,0],
@@ -200,8 +200,8 @@ class Visualize():
                               alpha=1,
                               cmap='coolwarm'
                               )
-                plt.xlabel(xytitle+'1', fontsize=fontsize)
-                plt.ylabel(xytitle+'2', fontsize=fontsize)
+                plt.xlabel(xytitle + '1', fontsize=fontsize)
+                plt.ylabel(xytitle + '2', fontsize=fontsize)
                 plt.gca().set_xticks([])
                 plt.gca().set_yticks([])
                 plt.autoscale(enable=True, axis='both')
@@ -223,23 +223,23 @@ class Visualize():
             nrow = int(np.sqrt(n))
             ncol = int(np.ceil(n / nrow))
             
-            if (n % 2 != 0 and n>3) or nrow*ncol<n:
-                ncol=ncol+1
+            if (n % 2 != 0 and n > 3) or nrow * ncol < n:
+                ncol = ncol+1
             
             if n<4:
-                fig, axs = plt.subplots(nrow, ncol, dpi=100, 
-                                        figsize= (ncol*height*1.5,
-                                                  nrow*height*1.5)
-                                       )
+                fig, axs = plt.subplots(nrow, ncol, dpi=100,
+                                        figsize=(ncol*height*1.5,
+                                                 nrow*height*1.5)
+                                        )
             else:
                 fig, axs = plt.subplots(nrow, ncol, dpi=100,
                                         figsize=(ncol*height,
                                                  nrow*height)
-                                       )
-        
+                                        )
+
             if nrow*ncol>n:
                 for i in range(ncol*nrow - n):
-                    fig.delaxes(axs[-1][-(i+1)])            
+                    fig.delaxes(axs[-1][-(i+1)])      
             if type(axs) != np.ndarray:
                 axs = [axs]
             else:
@@ -247,19 +247,20 @@ class Visualize():
             for i in range(n):
                 if i < n:
                     if type(gene[i]) is list:
-                        marker=gene[i]
+                        marker = gene[i]
                     else:
                         marker = [gene[i]]
-                    color=self.X[:, self.signal_genes.isin([gene[i]])].mean(axis=1)        
-                    
+                    color = self.X[:, 
+                                   self.signal_genes.isin([gene[i]])].mean(axis=1)        
+
                     with plt.style.context('seaborn-paper'):
-                        g=axs[i].scatter(self.embedding[:,0], 
-                                         self.embedding[:,1],
-                                         s=psize,
-                                         c=color,
-                                         alpha=1,
-                                         cmap='coolwarm'
-                                        )
+                        g = axs[i].scatter(self.embedding[:, 0],
+                                           self.embedding[:, 1],
+                                           s=psize,
+                                           c=color,
+                                           alpha=1,
+                                           cmap='coolwarm'
+                                           )
                         axs[i].set_xticks([])
                         axs[i].set_yticks([])
                         axs[i].autoscale(enable=True, axis='both')
@@ -268,53 +269,59 @@ class Visualize():
                         cax = divider.append_axes("right", "2.5%", pad="1%")
 
                         axs[i].set_title(str(marker[0]), fontsize=fontsize)
-                        if marker[0]=='library':
-                            cb=fig.colorbar(g, cax=cax, label='library complexity', ticks=[])
-                            cb.set_label(label='library complexity', fontsize=fontsize-2)
+                        if marker[0] == 'library':
+                            cb=fig.colorbar(g, cax=cax, 
+                                            label='library complexity',
+                                            ticks=[])
+                            cb.set_label(label='library complexity',
+                                         fontsize=fontsize-2)
                         else:
-                            cb=fig.colorbar(g, cax=cax, label = 'log2(1+TPM)', ticks=[])
-                        cb.set_label(label='log2(1+TPM)', fontsize=fontsize-2)
+                            cb=fig.colorbar(g, cax=cax, 
+                                            label='log2(1+TPM)',
+                                            ticks=[])
+                        cb.set_label(label='log2(1+TPM)',
+                                     fontsize=fontsize-2)
                         
                         fig.set_tight_layout(False)
                     
                     if title:
                         axs[i].set_title(title)
                     else:
-                        if len(marker)<2:
-                            axs[i].set_title(str(marker[0]), fontsize=fontsize)
+                        if len(marker) < 2:
+                            axs[i].set_title(str(marker[0]),
+                                             fontsize=fontsize)
 
-                        elif len(marker)>1:
+                        elif len(marker) > 1:
                                 axs[i].set_title('list starting with ' + str(marker[0]))
 
                     if i % ncol == 0:
                         axs[i].set_ylabel(xytitle+'2', fontsize=fontsize)
                     if ((i // ncol) + 1) == nrow:
                         axs[i].set_xlabel(xytitle+'1', fontsize=fontsize)
-                  
-                    
+
         else:
-            with sns.plotting_context("paper", font_scale = 1.5):
+            with sns.plotting_context("paper", font_scale=1.5):
                 sns.lmplot(x='x',
                            y='y',
                            fit_reg=False,
-                           scatter_kws = {'s': psize,
-                                          'alpha':.9,                                                                                                                   'color':'black'},
-                            hue = None,
-                            data = pd.DataFrame(self.embedding, columns=['x', 'y']),
-                            height = height,
-                            aspect = 1,
-                            legend=False,
-                            )
+                           scatter_kws={'s': psize,
+                                        'alpha': .9,                                                                                                                   'color':'black'},
+                           hue=None,
+                           data=pd.DataFrame(self.embedding,
+                                             columns=['x', 'y']),
+                           height=height,
+                           aspect=1,
+                           legend=False,
+                           )
                 plt.xlabel(xytitle + '1', fontsize=fontsize)
                 plt.ylabel(xytitle + '2', fontsize=fontsize)
-        
+
         sns.despine(top=False, right=False, left=False, bottom=False)
 
         if title:
-            plt.title(title)             
+            plt.title(title)
         if path:
-            plt.savefig(path, bbox_inches='tight')        
+            plt.savefig(path, bbox_inches='tight')
         plt.show()
 
-        return 
-        
+        return
