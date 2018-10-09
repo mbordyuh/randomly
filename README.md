@@ -21,7 +21,9 @@ Results:
 Additional plots:  
 
   a) Marchenko-Pastur distribution plot
+  
   b) Statistics on genes
+  
   c) t-SNE plot of denoised data
 
 ***Preparation***
