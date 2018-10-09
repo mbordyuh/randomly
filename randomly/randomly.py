@@ -588,6 +588,7 @@ class Rm(Visualize, Cluster):
             ygr = self._gamma_pdf(xgr, fitr)
             ys = self._gamma_pdf(xs, fits)
             y = stats.chi2.pdf(xk, self.n_components)
+            plt.ylim(0,max(y)+0.02)
 
             plt.plot(xk, y,
                      zorder=2,
