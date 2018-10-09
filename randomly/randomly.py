@@ -151,18 +151,15 @@ class Rm(Visualize, Cluster):
         """
 
         if self._preprocessing_flag:
-            print('''Single Cell data has already 
-                     been preprocessed with method preprocess''')
+            print('''Single Cell data has already been preprocessed with method preprocess''')
         else:
             # Duplicated gene and cell names are removed
             if not df.index.is_unique:
-                print('''Cell names are not unique. 
-                         Cell names are reset''')
+                print('''Cell names are not unique. Cell names are reset''')
                 df.index=range(len(df.index))
             
             if not df.columns.is_unique:
-                print('''Gene names are not unique. 
-                         Duplicated genes will be removed''')
+                print('''Gene names are not unique. Duplicated genes will be removed''')
                 df = df.loc[:, ~df.columns.duplicated()]
             self.gene_names = df.columns.tolist()
             self.cell_names = df.index.tolist()
