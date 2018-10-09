@@ -3,8 +3,6 @@
 Visualization of Marchenko Pastur algorithm and implementation
 PCA, tSNE dimensionality reduction techniques
 """
-from matplotlib.offsetbox import AnchoredText
-import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from matplotlib import style
 from sklearn.decomposition import PCA
@@ -148,7 +146,7 @@ class Visualize():
             with sns.plotting_context("paper", font_scale=1.5):
                 
                 fig=plt.figure(figsize=(height, height+0.5), dpi=100)
-                
+
                 sns.lmplot( x='x',
                             y='y',
                             fit_reg=False,
@@ -162,7 +160,7 @@ class Visualize():
                             palette=sns.set_palette(palette),
                             legend=False)
                 fig.set_tight_layout(False)
-                
+
                 if legend is not False:    
                          plt.legend(legend,
                                     loc='lower center',
@@ -314,5 +312,3 @@ class Visualize():
         if path:
             plt.savefig(path, bbox_inches='tight')
         plt.show()
-
-        return
