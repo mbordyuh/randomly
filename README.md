@@ -32,9 +32,9 @@ df = pd.read_table('Data/data.tsv', sep='\t', index_col=0)
 
 # Model fitting on input data
 model = randomly.Rm()
-model.preprocess(df, min_tp=100, 
-                     min_genes_per_cell=10, 
-                     min_cells_per_gene=10 )
+model.preprocess(df, min_tp=100,
+                 min_genes_per_cell=10,
+                 min_cells_per_gene=10)
 model.fit()
 ```
          """The method executes preprocessing of the data by removing 
@@ -49,15 +49,15 @@ model.fit()
 ***Plotting***
 
 ```python
-model.plot_mp(path = 'Figures/mp.pdf')
-model.plot_statistics(path = 'Figures/statistics.pdf')
+model.plot_mp(path='Figures/mp.pdf')
+model.plot_statistics(path='Figures/statistics.pdf')
 model.fit_tsne()
-model.plot(path = 'Figures/tsne.pdf')
+model.plot(path='Figures/tsne.pdf')
 ```
 
 ***Data Denoising***
 
-Denoised data is returned through a pandas DataFrame of shape (cells, signal genes), where the number of signal genes is controlled through the False Discovery Rate parameter (fdr = 1 corresponds to all genes, default fdr = 0.001)
+Denoised data is returned as a pandas DataFrame of shape (cells, signal genes), where the number of signal genes is controlled through the False Discovery Rate parameter (fdr=1 corresponds to all genes, default fdr= 0.001)
 
 ```python
 df_denoised = model.return_cleaned()
