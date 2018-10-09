@@ -19,6 +19,7 @@ Results:
 - df_denoised : pandas DataFrame, shape (n_cells, n_signal_genes)
 
 Additional plots:  
+    
     a) Marchenko-Pastur distribution plot
     
     b) Statistics on genes
