@@ -1,9 +1,19 @@
 import pandas as pd
 import numpy as np
 from scipy import stats, linalg
-from .visualization import *
-from .clustering import *
+
+import matplotlib.pyplot as plt
 from matplotlib import rcParams
+import matplotlib.lines as mlines
+import matplotlib.gridspec as gridspec
+from matplotlib.offsetbox import AnchoredText
+import matplotlib.patches as mpatches
+import seaborn as sns
+
+from .visualization import Visualize
+from .clustering import Cluster
+
+
 rcParams['patch.force_edgecolor'] = True
 
 class Rm(Visualize, Cluster):
@@ -462,7 +472,7 @@ class Rm(Visualize, Cluster):
                          hist_kws={"histtype": "step", "linewidth": 3,
                          "alpha": 0.75,
                          "color": sns.xkcd_rgb["apple green"]}
-                        )
+                         )
 
             plt.plot(x, yr,
                      sns.xkcd_rgb["sap green"],
@@ -519,7 +529,7 @@ class Rm(Visualize, Cluster):
         return
 
     def plot_statistics(self, path=False, fit=True):
-        """Plot statistics, describe
+        """Plot statistics,
 
         Parameters
         ----------
@@ -690,7 +700,9 @@ class Rm(Visualize, Cluster):
                                    linewidth=1.5,
                                    linestyle='-.')
 
-        ax1.legend(handles=[line_fdr, line_genes], loc="upper right", frameon=True)
+        ax1.legend(handles=[line_fdr, line_genes],
+                   loc="upper right",
+                   frameon=True)
         host.set_yscale("log")
         host.grid(True)
         host.set_xlabel('Normalized sample variance')

@@ -15,7 +15,7 @@ class Cluster():
        labels:
        Labels for each data point
     '''
-
+    
     def __init__(self):
         self.X = None
 

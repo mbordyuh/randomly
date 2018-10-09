@@ -1,30 +1,21 @@
 
 """
 Visualization of Marchenko Pastur algorithm and implementation
-MDS, PCA, tSNE dimensionality reduction techniques
+PCA, tSNE dimensionality reduction techniques
 """
 from matplotlib.offsetbox import AnchoredText
 import matplotlib.patches as mpatches
-import matplotlib.lines as mlines
-import matplotlib.gridspec as gridspec
-from matplotlib.offsetbox import AnchoredText
-import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-import matplotlib.gridspec as gridspec
 from matplotlib import style
-from mpl_toolkits.axes_grid1 import host_subplot, make_axes_locatable
 from sklearn.decomposition import PCA
 
-import logging
 import multiprocessing 
-
 from MulticoreTSNE import MulticoreTSNE
 import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from .palettes import *
+from .palettes import pallete_50
 
 style.use("ggplot")
 np.seterr(invalid='ignore')
