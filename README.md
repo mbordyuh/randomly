@@ -32,9 +32,19 @@ df = pd.read_table('Data/data.tsv', sep='\t', index_col=0)
 
 # Model fitting on input data
 model = randomly.Rm()
-model.preprocess(df)
+model.preprocess(df, min_tp=100, 
+                     min_genes_per_cell=10, 
+                     min_cells_per_gene=10 )
 model.fit()
 ```
+         """The method executes preprocessing of the data by removing 
+        1. Genes and cells that have less than 100 transcripts by default. 
+        2. Cells are removed that express less than min_tp genes
+        3. Genes are removed that expressed less than in 10 cells
+
+        4. Transcripts are being converted to log2(1+TPM). 
+        5. Genes are  standard-normalized to have zero mean and standard 
+        deviation equal to 1. 
 
 ***Plotting***
 
