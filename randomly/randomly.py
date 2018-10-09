@@ -151,26 +151,30 @@ class Rm(Visualize, Cluster):
         """
 
         if self._preprocessing_flag:
-            print('Single Cell data has already been preprocessed with method preprocess')
+            print('''Single Cell data has already 
+                     been preprocessed with method preprocess''')
         else:
             # Duplicated gene and cell names are removed
             if not df.index.is_unique:
-                print('Cell names are not unique. Cell names are reset')
+                print('''Cell names are not unique. 
+                         Cell names are reset''')
                 df.index=range(len(df.index))
+            
             if not df.columns.is_unique:
-                print('Gene names are not unique. Duplicated genes will be removed')
+                print('''Gene names are not unique. 
+                         Duplicated genes will be removed''')
                 df = df.loc[:, ~df.columns.duplicated()]
             self.gene_names = df.columns.tolist()
             self.cell_names = df.index.tolist()
 
-            self.signal_genes = df.columns[(np.sum(df.values, axis=0) > min_tp)
+            self.normal_genes = df.columns[(np.sum(df.values, axis=0) > min_tp)
                                          & (np.count_nonzero(df.values, axis=0) >= min_cells_per_gene)]
 
-            self.signal_cells = df.index[(np.sum(df.values, axis=1) > min_tp) &
+            self.normal_cells = df.index[(np.sum(df.values, axis=1) > min_tp) &
                                          (np.count_nonzero(df.values, axis=1) >= min_genes_per_cell)]
 
-            self.filtered_genes = list(set(self.gene_names) - set(self.signal_genes))
-            df = df.loc[self.signal_cells, self.signal_genes]
+            self.filtered_genes = list(set(self.gene_names) - set(self.normal_genes))
+            df = df.loc[self.normal_cells, self.normal_genes]
             self.X = np.log2(1 + self._to_tpm(df.values))
             self.n_cells = self.X.shape[0]
             self.n_genes = self.X.shape[1]
@@ -201,14 +205,16 @@ class Rm(Visualize, Cluster):
         return
 
     def _fit(self):
-        """Fit the model for the dataframe df and apply the dimensionality reduction
-        by removing the eigenvalues that follow Marchenko - Pastur distribution
+        """Fit the model for the dataframe df and apply 
+           the dimensionality reduction by removing the eigenvalues 
+           that follow Marchenko - Pastur distribution
         """
         self.mean_ = np.mean(self.X, axis=0)
         self.std_ = np.std(self.X, axis=0, ddof=0)
         self.X = (self.X-self.mean_) / (self.std_+0.0)
 
-        """Dispatch to the right submethod depending on the chosen solver"""
+        """Dispatch to the right submethod depending on 
+           the chosen solver"""
         if self.eigen_solver == 'wishart':
             Y = self._wishart_matrix(self.X)
             (self.L, self.V) = self._get_eigen(Y)
@@ -223,7 +229,8 @@ class Rm(Visualize, Cluster):
             self.lambda_c = self._tw()
             self.peak = self._mp_parameters(self.L_mp)['peak']
         else:
-            print('Solver is undefined, please use Wishart Matrix as eigenvalue solver')
+            print('''Solver is undefined, please use 
+                     Wishart Matrix as eigenvalue solver''')
 
         # self.L[-2:]=0
         self.Ls = self.L[self.L > self.lambda_c]
@@ -259,9 +266,10 @@ class Rm(Visualize, Cluster):
 
         self.components_genes = dict()
         for j in range(self.n_components):
-            self.components_genes[j] = np.array(self.signal_genes)[
-                                       np.square(signal_projected_genes[:, -j-1])
-                                       > 10 * np.max(np.square(noise_projected_genes), axis=1)
+            self.components_genes[j] = np.array(self.normal_genes)[
+                                       np.square(signal_projected_genes[:, -j - 1])
+                                       > 10 * np.max(np.square(noise_projected_genes), 
+                                                     axis=1)
                                                                   ]
 
         # self.X=np.dot(np.dot(np.diag(self.Ls)*np.dot(Vs, Vs.T)), self.X)
@@ -269,7 +277,9 @@ class Rm(Visualize, Cluster):
         #                    (np.sqrt(self.Ls)*Vs).T)
         #             , self.X)
         self.X = np.dot(np.dot(Vs, Vs.T),
-                         self.X)  # X=U S V^T= U(V S)^T= U (X^T U)^T = U U^T X ~ Us Us^T X
+                         self.X)  # X = U S V^T= U(V S)^T = 
+                                  # U (X^T U)^T = U U^T X ~ 
+                                  # Us Us^T X
 
     def return_cleaned(self, fdr=0.001):
         ''' Method returns the dataframe with denoised single
@@ -288,8 +298,8 @@ class Rm(Visualize, Cluster):
                 Cleaned matrix
         '''
         df = pd.DataFrame(self.X)
-        df.index = self.cell_names
-        df.columns = self.signal_genes
+        df.index = self.normal_cells
+        df.columns = self.normal_genes
         df = df # +self.mean_
         if fdr == 1:
             return df
@@ -297,7 +307,8 @@ class Rm(Visualize, Cluster):
             genes = self.select_genes(fdr)
             return df.loc[:, genes]
         else:
-            print('Genes False discovery rate is undefined, please select FDR<1')
+            print('''Genes False discovery rate is undefined,
+                     please select FDR < 1''')
 
     def _to_tpm(self, X):
         '''Transform transcripts to transcripts per million'''
@@ -330,7 +341,8 @@ class Rm(Visualize, Cluster):
         return (L, V)
 
     def _mp_parameters(self, L):
-        """Compute Parameters of the Marchenko Pastur Distribution of eigenvalues L"""
+        """Compute Parameters of the Marchenko 
+        Pastur Distribution of eigenvalues L"""
         moment_1 = np.mean(L)
         moment_2 = np.mean(np.power(L, 2))
         gamma = moment_2 / float(moment_1**2) - 1
@@ -392,10 +404,12 @@ class Rm(Visualize, Cluster):
         return L[(L > new_b_minus) & (L < new_b_plus)]
 
     def _project_genes(self, X, V):
-        '''Return (n_genes, n_components) matrix of gene projections on components'''
+        '''Return (n_genes, n_components) matrix 
+           of gene projections on components'''
         return np.dot(X.T, V)
     def _project_cells(self, X, V):
-        '''Return (n_cells, n_components) matrix of cell projections on components'''
+        '''Return (n_cells, n_components) matrix 
+           of cell projections on components'''
         return np.dot(X, np.dot(X.T, V))
 
     def get_gene_norm(self, X):
@@ -459,8 +473,10 @@ class Rm(Visualize, Cluster):
                      ls='--'
                     )
 
-            plt.legend(['MP for random part in data', 'MP for randomized data',
-                        'Randomized data', 'Real data'],
+            plt.legend(['MP for random part in data',
+                        'MP for randomized data',
+                        'Randomized data', 
+                        'Real data'],
                         loc="upper right",
                         frameon=True)    
 
@@ -698,7 +714,7 @@ class Rm(Visualize, Cluster):
         return (fdr_x, len(genes))
 
     def _fdr_genes(self, x):
-        '''Number of genes for the false discovery rate'''
+        '''Number of signal genes for the false discovery rate'''
         area_noise = len(self._snr[self._snr > x])
         area_signal = len(self._s[self._s > x])
         fdr_x = area_noise / float(area_signal)
@@ -710,7 +726,7 @@ class Rm(Visualize, Cluster):
         y_fdr = np.vectorize(self._fdr_genes)(xgr)
         idx = np.abs(y_fdr[0] - fdr).argmin()
         x = y_fdr[1][idx]
-        genes = np.array(self.signal_genes)[self._s > x].tolist()
+        genes = np.array(self.normal_genes)[self._s > x].tolist()
         return genes
 
     def _fit_gamma(self, x):

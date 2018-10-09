@@ -91,7 +91,7 @@ class Visualize():
             raise ValueError('Nothing to plot, please fit the data first')
         else:
             genes=self.select_genes(fdr)
-            X=self.X.copy()[:,self.signal_genes.isin(genes)]
+            X=self.X.copy()[:,self.normal_genes.isin(genes)]
                             
 
         if n_comp:
@@ -126,7 +126,7 @@ class Visualize():
             raise ValueError('Nothing to plot, please fit the data first')
         else:
             genes=self.select_genes(fdr)
-            X=self.X.copy()[:, self.signal_genes.isin(genes)]
+            X=self.X.copy()[:, self.normal_genes.isin(genes)]
            
         pca = PCA(n_components=n_comp, svd_solver='full')
         self.embedding=pca.fit_transform(self.X)
@@ -187,7 +187,7 @@ class Visualize():
 
         elif type(gene) is list:
              
-            color=self.X[:, self.signal_genes.isin(gene)].mean(axis=1)
+            color=self.X[:, self.normal_genes.isin(gene)].mean(axis=1)
             with plt.style.context('seaborn-paper'):
                 
                 fig=plt.figure(figsize=(height, height + 0.5), dpi=100)
@@ -251,7 +251,7 @@ class Visualize():
                     else:
                         marker = [gene[i]]
                     color = self.X[:, 
-                                   self.signal_genes.isin([gene[i]])].mean(axis=1)        
+                                   self.normal_genes.isin([gene[i]])].mean(axis=1)        
 
                     with plt.style.context('seaborn-paper'):
                         g = axs[i].scatter(self.embedding[:, 0],
