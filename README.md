@@ -9,7 +9,9 @@ pip install -r requirements.txt
 ```
 
 **Usage Example**
+
 It is important to use Python3 (Python2 would not work)
+
 Input parameters:
 - df : pandas DataFrame, shape (n_cells, n_genes) where cell barcodes are stored in the index and gene symbols in the columns. Values in the table should be transcripts (integers).
 
