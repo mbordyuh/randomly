@@ -9,7 +9,7 @@ import matplotlib.gridspec as gridspec
 from matplotlib.offsetbox import AnchoredText
 import matplotlib.patches as mpatches
 import seaborn as sns
-
+import sys
 from .visualization import Visualize
 from .clustering import Cluster
 
@@ -107,6 +107,10 @@ class Rm(Visualize, Cluster):
     """
 
     def __init__(self, tol=0.0, random_state=None):
+        
+        if sys.version_info[0] < 3:
+            raise Exception("Please use Python 3")
+        
         self.eigen_solver = 'wishart'
         self.tol = tol
         self.random_state = random_state
