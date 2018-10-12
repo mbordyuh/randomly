@@ -136,7 +136,7 @@ class Rm(Visualize, Cluster):
         self._preprocessing_flag = False
 
     def preprocess(self, df,
-                   min_tp=100,
+                   min_tp=10,
                    min_genes_per_cell=10,
                    min_cells_per_gene=10):
         """The method executes preprocessing of the data by removing
@@ -246,15 +246,9 @@ class Rm(Visualize, Cluster):
             print('''Solver is undefined, please use
                      Wishart Matrix as eigenvalue solver''')
 
-        # self.L[-2:]=0
         self.Ls = self.L[self.L > self.lambda_c]
         Vs = self.V[:, self.L > self.lambda_c]
-        # Remove first 2 components
-        # self.Ls=self.Ls[:-2]
-        # Vs=Vs[:,:-2]
-        # self.V=self.V[:,:-1]
-        # self.L=self.L[:,-1]
-
+        
         self.Vs = Vs
         noise_boolean = ((self.L < self.lambda_c) & (self.L > self.b_minus))
         Vn = self.V[:, noise_boolean]
@@ -288,10 +282,6 @@ class Rm(Visualize, Cluster):
                               axis=1)
             ]
 
-        # self.X=np.dot(np.dot(np.diag(self.Ls)*np.dot(Vs, Vs.T)), self.X)
-        # self.X=np.dot(np.dot(np.sqrt(self.Ls)*Vs,
-        #                    (np.sqrt(self.Ls)*Vs).T)
-        #             , self.X)
         self.X = np.dot(np.dot(Vs, Vs.T),
                         self.X)  # X = U S V^T= U(V S)^T =
         # U (X^T U)^T = U U^T X ~
@@ -745,7 +735,6 @@ class Rm(Visualize, Cluster):
         area_noise = len(self._snr[self._snr > x])
         area_signal = len(self._s[self._s > x])
         fdr_x = area_noise / float(area_signal)
-        # genes = self._s[self._s > x].tolist()
         return (fdr_x, x)
 
     def select_genes(self, fdr=0.001):
